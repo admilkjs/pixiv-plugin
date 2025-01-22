@@ -15,7 +15,20 @@ class PixivNovelDownloader {
    * 初始化浏览器实例
    */
   async _setupBrowser() {
-    const browserOptions = { headless: true };
+    const browserOptions = {
+      headless: true, // 保持无头模式
+      args: [
+        "--no-sandbox", // 禁用沙箱（对于某些环境如CI/CD很重要）
+        "--disable-setuid-sandbox", // 禁用setuid沙箱
+        "--disable-dev-shm-usage", // 防止因共享内存不足导致的错误
+        "--disable-gpu", // 禁用GPU硬件加速，头模式下不需要GPU加速
+        "--disable-software-rasterizer", // 禁用软件渲染（如果不需要，提升性能）
+        "--no-zygote", // 禁用zygote进程，节省内存
+        "--disable-translate", // 禁用自动翻译功能
+        "--headless", // 保持无头模式
+      ],
+      ignoreHTTPSErrors: true, // 忽略HTTPS错误
+    };
 
     if (this.proxy) {
       browserOptions.args = [`--proxy-server=${this.proxy}`];

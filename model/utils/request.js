@@ -58,4 +58,4 @@ class Request {
   }
 }
 import Config from "../../components/Config.js";
-export default new Request(Config.getYaml("config", "config")?.proxy);
+export default Request
