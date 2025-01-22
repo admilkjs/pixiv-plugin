@@ -1,4 +1,4 @@
-import { PluginPath } from '#components'
+import Path from '#components'
 
 export default {
   name: 'Pixiv-plugin',
@@ -9,5 +9,5 @@ export default {
   isV3: true,
   isV2: false,
   description: 'Yunzai-Bot的Pixiv插件',
-  iconPath: `${PluginPath}/resources/icon.png`
+  iconPath: `${Path.PluginPath}/resources/icon.png`
 }

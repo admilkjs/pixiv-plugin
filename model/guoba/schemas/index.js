@@ -1,10 +1,9 @@
 import lodash from 'lodash'
+import Config from '#components'
 import config from './config.js'
 import other from './other.js'
 import push from './push.js'
 import tips from './tips.js'
-
-import { Config } from '#components'
 
 export const schemas = [
   config,
