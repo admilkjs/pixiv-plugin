@@ -40,11 +40,9 @@ async function scanDirectory (directory) {
 }
 
 try {
-  // 递推
   const filePaths = await scanDirectory(appsDir)
   logger.debug(`[pixiv-plugin] 构建模块路径完成，共计 ${filePaths.length} 个模块。`)
 
-  // 并发
   logger.debug('[pixiv-plugin] 开始并发加载所有模块...')
 
   const loadModules = filePaths.map(async ({ name, filePath }) => {
