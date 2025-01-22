@@ -1,0 +1,17 @@
+{
+    "name": "pixiv-plugin",
+    "version": "1.1.0",
+    "author": "@AdmilkJS",
+    "type": "module",
+    "scripts": {
+        "fix": "npx prettier --write **/*.js && npx prettier --write *.js"
+    },
+    "dependencies": {
+        "axios": "^1.7.9",
+        "yaml": "^2.2.2"
+    },
+    "imports": {
+        "#components": "./components/index.js",
+        "#model": "./model/index.js"
+    }
+}
