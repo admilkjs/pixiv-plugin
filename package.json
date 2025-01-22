@@ -8,6 +8,8 @@
     },
     "dependencies": {
         "axios": "^1.7.9",
+        "https-proxy-agent": "7.0.5",
+        "socks-proxy-agent": "^8.0.5",
         "yaml": "^2.2.2"
     },
     "imports": {
