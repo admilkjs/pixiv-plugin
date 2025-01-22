@@ -1,18 +1,27 @@
 import puppeteer from "puppeteer";
+
 class PixivNovelDownloader {
   /**
    * @param {Object} options - 配置选项
    * @param {string} options.cookie - Pixiv的cookie字符串
+   * @param {string} [options.proxy] - 可选的代理字符串，例如 'http://localhost:8080' 或 'socks5://localhost:1080'
    */
-  constructor({ cookie }) {
+  constructor({ cookie, proxy }) {
     this.cookie = cookie;
+    this.proxy = proxy;
   }
 
   /**
    * 初始化浏览器实例
    */
   async _setupBrowser() {
-    this.browser = await puppeteer.launch({ headless: true });
+    const browserOptions = { headless: true };
+
+    if (this.proxy) {
+      browserOptions.args = [`--proxy-server=${this.proxy}`];
+    }
+
+    this.browser = await puppeteer.launch(browserOptions);
     this.page = await this.browser.newPage();
     await this.page.setCookie(...this._parseCookies(this.cookie));
   }
