@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { PluginPath } from './Path.js'
+import Path from './Path.js'
 import path from 'path'
 
 const readJsonFile = (filePath) => {
@@ -11,7 +11,7 @@ const readJsonFile = (filePath) => {
 }
 
 const packageJson = readJsonFile('package.json')
-const pluginPackageJson = readJsonFile(path.join(PluginPath, 'package.json'))
+const pluginPackageJson = readJsonFile(path.join(Path.PluginPath, 'package.json'))
 
 const Version = {
   isMiao: Boolean(packageJson?.dependencies?.sequelize),

@@ -3,7 +3,10 @@ import chokidar from 'chokidar'
 import fs from 'node:fs'
 import YamlReader from './YamlReader.js'
 import _ from 'lodash'
-import { PluginPath } from './Path.js'
+import Path from './Path.js'
+
+const PluginPath = Path.PluginPath
+
 class Config {
   constructor () {
     this.config = {}

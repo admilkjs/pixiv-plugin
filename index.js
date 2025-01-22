@@ -1,12 +1,10 @@
 import fs from 'node:fs/promises'
-import path from 'node:path'
+import path from 'path'
 import chalk from 'chalk'
-import { fileURLToPath, pathToFileURL } from 'url'
+import { pathToFileURL } from 'url'
+import Path from './components/Path.js'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const appsDir = path.join(__dirname, 'app')
-
+const appsDir = path.join(Path.PluginPath, 'apps')
 const colors = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
 const coloredDashes = Array.from({ length: 23 }, () => {
   const randomColor = colors[Math.floor(Math.random() * colors.length)]
