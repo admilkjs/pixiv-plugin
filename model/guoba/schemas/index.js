@@ -1,14 +1,24 @@
 import lodash from 'lodash'
 import config from './config.js'
+import other from './other.js'
+import push from './push.js'
+import tips from './tips.js'
+
 import { Config } from '#components'
 
 export const schemas = [
-  config
+  config,
+  other,
+  push,
+  tips
 ].flat()
 
 export function getConfigData () {
   return {
-    config: Config.getDefOrConfig('config')
+    config: Config.getDefOrConfig('config'),
+    push: Config.getDefOrConfig('push'),
+    tips: Config.getDefOrConfig('tips'),
+    other: Config.getDefOrConfig('other')
   }
 }
 

@@ -151,8 +151,14 @@ class Config {
 
   getCfg () {
     let config = this.getDefOrConfig('config')
+    let other = this.getDefOrConfig('other')
+    let push = this.getDefOrConfig('push')
+    let tips = this.getDefOrConfig('tips')
     return {
-      ...config
+      ...config,
+      ...other,
+      ...push,
+      ...tips
     }
   }
 
