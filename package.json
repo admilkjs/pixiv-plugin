@@ -13,5 +13,15 @@
     "imports": {
         "#components": "./components/index.js",
         "#model": "./model/index.js"
-    }
+    },
+    "keywords": [
+        "喵崽",
+        "Miao-Yunzai",
+        "TRSS-Yunzai",
+        "云崽",
+        "Yunzai-Bot",
+        "Pixiv",
+        "Pixiv-Plugin",
+        "AdmilkJS"
+    ]
 }
