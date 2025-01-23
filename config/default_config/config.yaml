@@ -1,2 +1,4 @@
-# 代理地址 null 为不使用代理
-proxy: null
+# 代理地址,http或socks5
+proxy: ""
+# Pixiv的Cookie
+cookie: ""

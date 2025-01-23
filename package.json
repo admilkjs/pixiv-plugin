@@ -19,7 +19,8 @@
     },
     "imports": {
         "#components": "./components/index.js",
-        "#model": "./model/index.js"
+        "#model": "./model/index.js",
+        "#utils": "./model/utils/index.js"
     },
     "keywords": [
         "喵崽",

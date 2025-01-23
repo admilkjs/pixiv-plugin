@@ -1,61 +1,71 @@
-import axios from "axios";
-import { SocksProxyAgent } from "socks-proxy-agent";
-import { HttpsProxyAgent } from "https-proxy-agent";
-/**
- * @description 请求类
- * @param {String} proxy 代理地址
- */
-class Request {
-  constructor(proxy = null) {
-    const axiosConfig = {
-      timeout: 10000,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36",
-      },
-    };
+import axios from 'axios'
+import { SocksProxyAgent } from 'socks-proxy-agent'
+import { HttpsProxyAgent } from 'https-proxy-agent'
+import Config from '#components'
 
-    if (proxy) {
-      if (proxy.startsWith("socks")) {
-        axiosConfig.httpAgent = new SocksProxyAgent(proxy);
-        axiosConfig.httpsAgent = new SocksProxyAgent(proxy);
-      } else {
-        axiosConfig.httpAgent = new HttpsProxyAgent(proxy);
-        axiosConfig.httpsAgent = new HttpsProxyAgent(proxy);
-      }
+const config = Config.getDefOrConfig('config')
+
+class HttpClient {
+  constructor (proxy, cookie) {
+    this.proxy = proxy
+    this.cookie = cookie
+    this.defaultHeaders = {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
+      'Content-Type': 'application/json',
+      Cookie: cookie
     }
-
-    this.axios = axios.create(axiosConfig);
+    this.agent = this.createAgent(proxy)
   }
-  /**
-   * @description 请求方法
-   * @param {String} method 请求方法: get, post
-   * @param {String} url 请求地址
-   * @param {Object} data 请求数据: get请求为params, post请求为data
-   * @param {String} responseType 返回数据类型: json, text, blob, arraybuffer, document, stream
-   * @returns {Promise} 返回请求结果
-   */
-  async request(method, url, data = null, responseType = "json") {
-    const config = {
-      method,
-      url,
-      responseType,
-    };
-    if (method === "get") {
-      config.params = data;
+
+  createAgent (proxy) {
+    if (proxy.startsWith('http://') || proxy.startsWith('https://')) {
+      return new HttpsProxyAgent(proxy)
+    } else if (proxy.startsWith('socks')) {
+      return new SocksProxyAgent(proxy)
     } else {
-      config.data = data;
+      throw new Error('代理类型既不是http也不是socks')
     }
-    return this.axios(config);
   }
 
-  async get(url, params) {
-    return this.request("get", url, params);
-  }
+  async request ({ method = 'GET', url, data = null, headers = {} }) {
+    try {
+      const axiosInstance = axios.create({
+        httpsAgent: this.agent,
+        httpAgent: this.agent,
+        timeout: 10000
+      })
 
-  async post(url, data) {
-    return this.request("post", url, data);
+      const combinedHeaders = { ...this.defaultHeaders, ...headers }
+
+      const requestConfig = {
+        method,
+        url,
+        headers: combinedHeaders
+      }
+
+      if (method.toUpperCase() === 'POST' && data) {
+        requestConfig.data = data
+      }
+
+      const response = await axiosInstance(requestConfig)
+      return response.data
+    } catch (error) {
+      logger.error('请求失败:', error.message)
+      if (error.response) {
+        logger.error('响应状态:', error.response.status)
+        logger.error('响应数据:', error.response.data)
+      }
+      throw error
+    }
   }
 }
-import Config from "../../components/Config.js";
+
+const proxy = config.proxy
+const cookie = config.cookie
+if (!proxy || !cookie) {
+  throw new Error('代理和Cookie都没有配置,你玩你妈呢')
+}
+const Request = new HttpClient(proxy, cookie)
+
 export default Request
