@@ -10,12 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
       - name: 更新版本号
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v2  # 使用稳定版本
         id: release_please
         with:
           release-type: node
           token: ${{ secrets.GITHUB_TOKEN }}
           bump-minor-pre-major: true
           version-file: package.json
-          fork: false
+          create-release: false  # 这个选项会让它直接推送更新而不是创建PR
+
+      - name: 提交并推送更新的版本号
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add package.json
+          git commit -m "chore: bump version"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
