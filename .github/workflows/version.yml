@@ -1,41 +1,31 @@
-name: 更新版本号
+name: Release Version
 
 on:
   push:
     branches:
       - main
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
-  release-please:
+  release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v2
+      # 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: 设置 Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '21'
+      # 安装 release-please CLI
+      - name: Install release-please
+        run: npm install -g release-please
 
-      - name: 安装依赖
-        run: npm install
-
-      - name: 运行 release-please-action
-        uses: google-github-actions/release-please-action@v4
-        id: release
-        with:
-          release-type: node
-
-      - name: 更新版本号、CHANGELOG 和 package.json
+      # 使用 release-please CLI 直接更新版本并推送
+      - name: Release Please
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add .
-          git commit -m 'chore: 更新版本号'
-          git push
-        if: ${{ steps.release.outputs.release_created }}
+          release-please release \
+            --token="${GITHUB_TOKEN}" \
+            --release-type=node \
+            --package-name=pixiv-plugin \
+            --repo-url=${{ github.repository }} \
+            --default-branch=main
