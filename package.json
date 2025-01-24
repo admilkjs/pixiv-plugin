@@ -1,6 +1,6 @@
 {
     "name": "pixiv-plugin",
-    "version": "0.1.2",
+    "version": "1.0.0",
     "author": "@AdmilkJS",
     "type": "module",
     "scripts": {
