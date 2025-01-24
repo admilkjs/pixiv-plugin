@@ -1,4 +1,4 @@
-import { Request } from "#utils";
+import { Request } from '#utils'
 /**
  * 刷新 Pixiv 的 access_token
  * @param {string} refreshToken - 使用的刷新令牌
@@ -8,8 +8,8 @@ export async function refreshPixivToken(refreshToken) {
   try {
     // 发起请求来刷新 token
     const { data, headers } = await Request.request({
-      method: "POST",
-      url: "https://oauth.secure.pixiv.net/auth/token",
+      method: 'POST',
+      url: 'https://oauth.secure.pixiv.net/auth/token',
       data: new URLSearchParams({
         client_id: "MOBrBDS8blbauoSck0ZfDbtuzpyT",
         client_secret: "lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj",
@@ -25,11 +25,9 @@ export async function refreshPixivToken(refreshToken) {
       expires_in: expiresIn,
     } = data;
 
-    const newCookie = headers["set-cookie"]
-      ? headers["set-cookie"].join("; ")
-      : null;
+    const newCookie = headers['set-cookie'] ? headers['set-cookie'].join('; ') : null
 
-    return { accessToken, refreshToken: newRefreshToken, expiresIn, newCookie };
+    return { accessToken, refreshToken: newRefreshToken, expiresIn, newCookie }
   } catch (error) {
     logger.error(
       "Error refreshing Pixiv token:",
