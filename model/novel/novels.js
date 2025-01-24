@@ -16,8 +16,7 @@ export async function seriesDetail (pid) {
   try {
     const response = await Request.request({ url })
     if (response.error) throw new Error(response)
-    if (!Array.isArray(response.body.thumbnails.novel))
-      response.body.thumbnails.novel = [response.body.thumbnails.novel]
+    if (!Array.isArray(response.body.thumbnails.novel)) { response.body.thumbnails.novel = [response.body.thumbnails.novel] }
     return response.body.thumbnails.novel.map(item => ({
       id: item.id,
       title: item.title,
