@@ -1,146 +1,264 @@
-import axios from 'axios'
-import { SocksProxyAgent } from 'socks-proxy-agent'
-import { HttpsProxyAgent } from 'https-proxy-agent'
-import { Config } from '#components'
-import { randomInt } from 'crypto'
-
-const config = Config.getDefOrConfig('config')
-
-/**
- * 生成随机的 User-Agent 字符串，增强伪装性
- */
-function getRandomUserAgent () {
-  const userAgents = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:53.0) Gecko/20100101 Firefox/53.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36'
-  ]
-  return userAgents[randomInt(0, userAgents.length)]
+import fetch from "node-fetch"
+import { Config } from "../../components/index.js"
+import { Agent } from "https"
+import { HttpsProxyAgent } from "./httpsProxyAgentMod.js"
+import _ from "lodash"
+import Path from "../../components/index.js"
+const Log_Prefix = "[Pixiv-Proxy]"
+const CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36"
+const POSTMAN_UA = "PostmanRuntime/7.29.0"
+const Plugin_Path = Path.PluginPath
+const Configs = Config.getConfig()
+class HTTPResponseError extends Error {
+  constructor(response) {
+    super(`HTTP Error Response: ${response.status} ${response.statusText}`)
+    this.response = response
+  }
 }
 
-/**
- * HttpClient 类用于发起带有代理和 Cookie 配置的 HTTP 请求
- */
-class HttpClient {
+const checkStatus = response => {
+  if (response.ok) {
+    // response.status >= 200 && response.status < 300
+    return response
+  } else {
+    throw new HTTPResponseError(response)
+  }
+}
+
+export const qs = (obj) => {
+  let res = ""
+  for (const [ k, v ] of Object.entries(obj)) { res += `${k}=${encodeURIComponent(v)}&` }
+  return res.slice(0, res.length - 1)
+}
+
+const mergeOptions = (defaultOptions, userOptions) => {
+  const _defaultOptions = {
+    outErrorLog: true
+  }
+  // 优化headers的合并逻辑，确保安全性
+  const headers = { ...defaultOptions.headers, ...userOptions.headers }
+  return { ..._defaultOptions, ...defaultOptions, ...userOptions, headers }
+}
+
+export default new class {
   /**
-   * 构造函数，初始化代理、cookie 和默认请求头
-   * @param {string} proxy - 代理地址（可以是 http、https 或 socks 类型）
-   * @param {string} cookie - 请求使用的 Cookie
+   * 发送HTTP GET请求并返回响应
+   * @async
+   * @name get
+   * @param {string} url - 请求的URL
+   * @param {object} [options] - 请求的配置项
+   * @param {object} [options.params] - 请求的参数
+   * @param {object} [options.headers] - 请求的HTTP头部
+   * @param {boolean} [options.closeCheckStatus] - 是否关闭状态检查
+   * @param {'buffer'|'json'|'text'|'arrayBuffer'|'formData'|'blob'}[options.responseType] - 期望的返回数据，如果设置了该值，则返回响应数据的特定的方法（如json()、text()等）
+   * @param {boolean} [options.origError] 出现错误是否返回原始错误
+   * @param {boolean} [options.outErrorLog] 出现错误是否在控制台打印错误日志，默认为true
+   * @returns {Promise<Response|*>} - HTTP响应或响应数据
+   * @throws {Error} - 如果请求失败，则抛出错误，将`options.origError`设置为true则抛出原始错误
    */
-  constructor (proxy, cookie) {
-    this.proxy = proxy
-    this.cookie = cookie
-    this.defaultHeaders = {
-      'User-Agent': getRandomUserAgent(),
-      'Content-Type': 'application/json',
-      Referer: 'https://www.pixiv.net', // 防盗链
-      Origin: 'https://www.pixiv.net',
-      Cookie: cookie
-    }
-    this.agent = this.createAgent(proxy)
+  async get(url, options = {}) {
+    options = mergeOptions({ method: "GET", url }, options)
+    options = this._prepareRequest(options)
+    return this._reques(options)
   }
 
   /**
-   * 根据代理类型创建代理对象
-   * @param {string} proxy - 代理地址
-   * @returns {HttpsProxyAgent|SocksProxyAgent|null} 代理对象，或 null（如果没有代理）
+   * 发送HTTP POST请求并返回响应
+   * @async
+   * @function
+   * @param {string} url - 请求的URL
+   * @param {object} [options] - 请求的配置项
+   * @param {object} [options.data] - 请求的数据
+   * @param {object} [options.params] - 请求的参数
+   * @param {object} [options.headers] - 请求的HTTP头部
+   * @param {boolean} [options.closeCheckStatus] - 是否关闭状态检查
+   * @param {'buffer'|'json'|'text'|'arrayBuffer'|'formData'|'blob'} [options.responseType] - 期望的返回数据，如果设置了该值，则返回响应数据的特定的方法（如json()、text()等）
+   * @param {boolean} [options.origError] 出现错误是否返回原始错误
+   * @param {boolean} [options.outErrorLog] 出现错误是否在控制台打印错误日志，默认为true
+   * @returns {Promise<Response|*>} - HTTP响应或响应数据
+   * @throws {Error} - 如果请求失败，则抛出错误，将`options.origError`设置为true则抛出原始错误
    */
-  createAgent (proxy) {
-    if (!proxy) return null
-    if (proxy.startsWith('http://') || proxy.startsWith('https://')) {
-      return new HttpsProxyAgent(proxy)
-    } else if (proxy.startsWith('socks')) {
-      return new SocksProxyAgent(proxy)
-    } else {
-      throw new Error('代理类型既不是http也不是socks')
+  async post(url, options = {}) {
+    options = mergeOptions({
+      method: "POST", headers: { "Content-Type": "application/json" }, url
+    }, options)
+    options = this._prepareRequest(options)
+
+    if (options.data) {
+      logger.debug(`${Log_Prefix}POST request params data: `, options.data)
+      if (/json/.test(options.headers["Content-Type"])) {
+        options.body = JSON.stringify(options.data)
+      } else if (/x-www-form-urlencoded/.test(options.headers["Content-Type"])) {
+        options.body = qs(options.data)
+      } else {
+        options.body = options.data
+      }
+      delete options.data
     }
+    return this._reques(options)
   }
 
   /**
-   * 发起 HTTP 请求
-   * @param {Object} options - 请求选项
-   * @param {string} options.method - 请求方法（GET 或 POST）
-   * @param {string} options.url - 请求的 URL
-   * @param {Object} options.data - 请求的数据（仅适用于 POST 方法）
-   * @param {Object} options.headers - 请求头
-   * @returns {Promise<Object>} 请求的响应数据
-   * @throws {Error} 如果请求失败，抛出错误
+   * 绕cf Get请求
+   * @param {string} url
+   * @param {object} options 同fetch第二参数
+   * @param {object} options.params 请求参数
+   * @returns {Promise<Response|*>}
    */
-  async request ({ method = 'GET', url, data = null, headers = {} }) {
-    try {
-      // 随机化 User-Agent 和其他头部
-      const combinedHeaders = { ...this.defaultHeaders, ...headers, 'User-Agent': getRandomUserAgent() }
-
-      const axiosInstance = axios.create({
-        httpsAgent: this.agent ? this.agent : null,
-        httpAgent: this.agent ? this.agent : null,
-        timeout: 10000
-      })
-
-      const requestConfig = {
-        method,
-        url,
-        headers: combinedHeaders
-      }
-
-      if (method.toUpperCase() === 'POST' && data) {
-        requestConfig.data = data
-      }
-
-      await new Promise(resolve => setTimeout(resolve))
-
-      const response = await axiosInstance(requestConfig)
-      return response.data
-    } catch (error) {
-      // 错误处理和日志记录
-      logger.error('请求失败:', error.message)
-      if (error.response) {
-        logger.error('响应状态:', error.response.status)
-        logger.error('响应数据:', error.response.data)
-      }
-
-      // 如果请求失败且是网络问题或服务器问题，尝试重试
-      if (error.code === 'ECONNABORTED' || error.response?.status >= 500) {
-        logger.warn('请求失败，尝试重新请求...')
-        return this.retryRequest({ method, url, data, headers })
-      }
-
-      throw error
+  async cfGet(url, options = {}) {
+    options.cf = true
+    options.headers = {
+      "User-Agent": POSTMAN_UA,
+      ...options.headers
     }
+    return this.get(url, options)
   }
 
   /**
-   * 请求失败时重试请求
-   * @param {Object} options - 请求选项
-   * @returns {Promise<Object>} 请求的响应数据
+   * 绕cf Post请求
+   * @param {string} url
+   * @param {object} options 同fetch第二参数
+   * @param {object | string} options.data 请求参数
+   * @returns {Promise<Response|*>}
    */
-  async retryRequest ({ method, url, data, headers }) {
-    try {
-      // 最大重试次数设置为 3
-      const retries = 3
-      for (let i = 0; i < retries; i++) {
-        try {
-          const response = await this.request({ method, url, data, headers })
-          return response
-        } catch (error) {
-          if (i === retries - 1) throw error
-          logger.warn(`重试第 ${i + 1} 次请求...`)
-          await new Promise(resolve => setTimeout(resolve))
+  async cfPost(url, options = {}) {
+    options.cf = true
+    options.headers = {
+      "User-Agent": POSTMAN_UA,
+      ...options.headers
+    }
+    return this.post(url, options)
+  }
+
+  getAgent(cf, isProxy = true) {
+    let { proxyAddress } = Configs.proxy
+    let { cfTLSVersion } = Configs.picSearch
+    return cf
+      ? this.getTlsVersionAgent(proxyAddress, cfTLSVersion, isProxy)
+      : isProxy
+        ? new HttpsProxyAgent(proxyAddress)
+        : false
+  }
+
+  /**
+   * 从代理字符串获取指定 TLS 版本的代理
+   * @param {string} str
+   * @param {import('tls').SecureVersion} tlsVersion
+   * @param isProxy
+   */
+  getTlsVersionAgent(str, tlsVersion, isProxy) {
+    const tlsOpts = {
+      maxVersion: tlsVersion,
+      minVersion: tlsVersion
+    }
+    if (typeof str === "string") {
+      const isHttp = str.startsWith("http")
+      if (isHttp && isProxy) {
+        const opts = {
+          ..._.pick(new URL(str), [
+            "protocol",
+            "hostname",
+            "port",
+            "username",
+            "password"
+          ]),
+          tls: tlsOpts
         }
+        return new HttpsProxyAgent(opts)
       }
-    } catch (error) {
-      logger.error('请求重试失败:', error.message)
-      throw error
+    }
+    return new Agent(tlsOpts)
+  }
+
+  /**
+   * 代理请求图片
+   * @param {string} url 图片链接
+   * @param {object} options 配置
+   * @param {boolean} options.cache 是否缓存
+   * @param {number} options.timeout 超时时间
+   * @param {object} options.headers 请求头
+   * @returns {Promise<import('icqq').ImageElem>} 构造图片消息
+   */
+  async proxyRequestImg(url, { cache, timeout, headers } = {}) {
+    if (!this.getAgent()) return segment.image(url, cache, timeout, headers)
+    const start = Date.now()
+    let Request = await this.get(url, {
+      headers,
+      responseType: "buffer"
+    }).catch(err => logger.error(err))
+    const kb = Request ? logger.magenta((Request?.length / 1024).toFixed(2) + "kb") : logger.red("error")
+    const ms = logger.green(Date.now() - start + "ms")
+    logger.debug(`${Log_Prefix}[proxyRequestImg][${_.truncate(url)}] ${kb} ${ms}`)
+    return segment.image(Request ?? `${Plugin_Path}/resources/img/imgerror.png`, cache, timeout)
+  }
+
+  _prepareRequest(options) {
+    // 处理参数
+    if (options.params) {
+      options.url = `${options.url}?${qs(options.params)}`
+    }
+    logger.debug(`${Log_Prefix}[Request][${options.method.toUpperCase()}] ${decodeURI(options.url)}`)
+    options.headers = {
+      "User-Agent": CHROME_UA,
+      ...options.headers
+    }
+
+    if (options.agent === undefined || options.agent === true) {
+      const isProxy = options.agent === true || this.verifyIsProxy(options.url)
+      options.agent = this.getAgent(options.cf, isProxy)
+    }
+    return options
+  }
+
+  async _reques(options) {
+    try {
+      let res = await fetch(options.url, options)
+      res = await this._handleRes(res, options)
+      return res
+    } catch (err) {
+      this._handleError(err, options)
     }
   }
-}
 
-const proxy = config.proxy
-const cookie = config.cookie
-if (!cookie) {
-  throw new Error('Cookie都没有配置,你玩你妈呢')
-}
-const Request = new HttpClient(proxy, cookie)
+  _handleRes(res, options) {
+    if (!options.closeCheckStatus) {
+      res = checkStatus(res)
+    }
+    const responseType = options.responseType || options.statusCode
+    if (responseType) {
+      return res[responseType]()
+    }
+    return res
+  }
 
-export default Request
+  _handleError(err, options) {
+    options.outErrorLog && logger.error(err)
+    if (options.origError) throw err
+
+    throw new Error(
+        `RequestError: ${options.method.toUpperCase()} Error，${err.message.match(/reason:(.*)/)?.[1] || err.message}`
+    )
+  }
+
+  verifyIsProxy(url) {
+    const { blacklist, switchProxy, whitelist } = Configs.proxy
+    for (const i of whitelist) {
+      let res = matchWithWildcards(i, url)
+      if (res) return true
+    }
+    for (const i of blacklist) {
+      let res = matchWithWildcards(i, url)
+      if (res) return false
+    }
+    return switchProxy
+  }
+}()
+function matchWithWildcards(pattern, text) {
+  const regexPattern =
+    pattern
+      .replace(/\./g, "\\.")
+      .replace(/\*/g, ".*")
+      .replace(/\?/g, ".")
+  const regex = new RegExp(regexPattern)
+  return regex.test(text)
+}

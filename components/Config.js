@@ -260,4 +260,24 @@ class Config {
     }
   }
 }
-export default new Config()
+const configInstance = new Config();
+const handler = {
+  get(target, prop) {
+    if (prop in target) {
+      return target[prop];
+    }
+    const userConfig = target.getConfig(prop);
+    if (userConfig) {
+      return userConfig;
+    }
+    const defaultConfig = target.getdefSet(prop);
+    if (defaultConfig) {
+      return defaultConfig;
+    }
+    return undefined;
+  },
+};
+
+const Config = new Proxy(configInstance, handler);
+
+export default Config;

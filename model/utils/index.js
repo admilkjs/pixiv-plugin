@@ -1,3 +1,3 @@
-import Request from './request.js'
+import Request,{qs} from './request.js'
 
-export { Request }
+export { Request,qs }
