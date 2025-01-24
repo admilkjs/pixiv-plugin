@@ -10,12 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: 检出代码
+        uses: actions/checkout@v2
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
       - name: 更新版本号
-        uses: googleapis/release-please-action@v4
-        id: release_please
+        uses: googleapis/release-please-action@v2
         with:
           release-type: node
           token: ${{ secrets.GITHUB_TOKEN }}
           bump-minor-pre-major: true
           version-file: package.json
           fork: false
+
+      - name: 提交更改
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add package.json
+          git commit -m 'chore: 更新版本号'
+          git push
