@@ -1,4 +1,4 @@
-name: Release Version
+name: 更新版本号
 
 on:
   push:
@@ -6,26 +6,16 @@ on:
       - main
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      # 检出代码
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # 安装 release-please CLI
-      - name: Install release-please
-        run: npm install -g release-please
-
-      # 使用 release-please CLI 直接更新版本并推送
-      - name: Release Please
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          release-please release \
-            --token="${GITHUB_TOKEN}" \
-            --release-type=node \
-            --package-name=pixiv-plugin \
-            --repo-url=${{ github.repository }} \
-            --default-branch=main
+      - name: 更新版本号
+        uses: googleapis/release-please-action@v4
+        id: release_please
+        with:
+          release-type: node
+          token: ${{ secrets.GITHUB_TOKEN }}
+          bump-minor-pre-major: true
+          version-file: package.json
+          fork: false
