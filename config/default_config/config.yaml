@@ -4,3 +4,11 @@ proxy: ""
 refreshToken: ""
 # Pixiv的Cookie
 cookie: ""
+
+#* 翻译相关配置
+# 翻译API
+# 1.有道翻译
+translateAPI: 1
+# 有道翻译
+youdao:
+  appSecret: ""
