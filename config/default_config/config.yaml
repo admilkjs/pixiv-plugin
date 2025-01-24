@@ -1,4 +1,6 @@
 # 代理地址,http或socks5
 proxy: ""
+# pixiv的refreshToken
+refreshToken: ""
 # Pixiv的Cookie
 cookie: ""

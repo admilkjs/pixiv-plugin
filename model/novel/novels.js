@@ -1,5 +1,11 @@
 import { Request } from '#utils'
 
+/**
+ * 获取小说详情
+ * @param {string} pid - 小说的ID
+ * @returns {Promise<Object>} 包含小说标题和内容的对象
+ * @throws {Error} 如果获取数据失败，抛出错误
+ */
 export async function novelsDetail (pid) {
   let url = `https://www.pixiv.net/ajax/novel/${pid}?lang=zh`
   try {
@@ -11,6 +17,12 @@ export async function novelsDetail (pid) {
   }
 }
 
+/**
+ * 获取小说系列详情
+ * @param {string} pid - 小说系列的ID
+ * @returns {Promise<Array>} 包含小说系列中每部小说的ID、标题和系列标题的数组
+ * @throws {Error} 如果获取数据失败，抛出错误
+ */
 export async function seriesDetail (pid) {
   let url = `https://www.pixiv.net/ajax/novel/series_content/${pid}?lang=zh`
   try {

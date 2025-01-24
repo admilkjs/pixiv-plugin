@@ -1,14 +1,13 @@
 import { Request } from '#utils'
-
 /**
  * 刷新 Pixiv 的 access_token
  * @param {string} refreshToken - 使用的刷新令牌
- * @returns {Promise<Object>} 包含新的 access_token、refresh_token 和 expires_in 的对象
- * @throws {Error} 如果刷新 token 失败，抛出错误
+ * @returns {Promise<Object>} - 包含 access_token, refresh_token, expires_in, newCookie
  */
 export async function refreshPixivToken (refreshToken) {
   try {
-    const { data } = await Request.request({
+    // 发起请求来刷新 token
+    const { data, headers } = await Request.request({
       method: 'POST',
       url: 'https://oauth.secure.pixiv.net/auth/token',
       data: new URLSearchParams({
@@ -22,8 +21,9 @@ export async function refreshPixivToken (refreshToken) {
 
     const { access_token: accessToken, refresh_token: newRefreshToken, expires_in: expiresIn } = data
 
-    // 返回新的 token 信息
-    return { accessToken, refreshToken: newRefreshToken, expiresIn }
+    const newCookie = headers['set-cookie'] ? headers['set-cookie'].join('; ') : null
+
+    return { accessToken, refreshToken: newRefreshToken, expiresIn, newCookie }
   } catch (error) {
     logger.error('Error refreshing Pixiv token:', error.response ? error.response.data : error.message)
     throw error
