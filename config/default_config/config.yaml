@@ -10,4 +10,5 @@ cookie: ""
 translateAPI: "youdao"
 # 有道翻译
 youdao:
+  appKey: ""
   appSecret: ""
