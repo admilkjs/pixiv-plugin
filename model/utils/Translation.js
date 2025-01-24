@@ -3,7 +3,13 @@ import { Config } from '#components'
 
 const config = Config.getDefOrConfig('config')
 
-// 通用选择平台翻译,传入文本,平台,翻译原语言,翻译目标语言
+/**
+ * 通用的翻译函数
+ * @param {string} query - 需要翻译的文本
+ * @param {string} platform - 翻译平台
+ * @param {string} fromLang - 源语言，默认为 'auto'
+ * @returns {Promise<string>} - 翻译后的文本
+ */
 export async function translate (query, platform, fromLang, toLang) {
   let translator = null
   switch (platform) {
@@ -23,6 +29,7 @@ export async function translate (query, platform, fromLang, toLang) {
     throw new Error('不支持的翻译平台')
   }
 }
+
 /**
  * 将文本翻译成中文-有道翻译
  * @param {string} query - 需要翻译的文本
