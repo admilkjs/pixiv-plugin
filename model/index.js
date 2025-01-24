@@ -1,8 +1,7 @@
 import Request from "./utils/request.js";
-import { Novel,Novels } from "./novel/novels.js";
+import {
+  novelsDetail as Novel,
+  seriesDetail as Novels,
+} from "./novel/novels.js";
 
-export {
-    Request,
-    Novel,
-    Novels
-}
+export { Request, Novel, Novels };

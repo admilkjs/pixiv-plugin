@@ -3,7 +3,7 @@ import YamlReader from './YamlReader.js'
 import Config from './Config.js'
 import Path from './Path.js'
 
-export default {
+export {
   Version,
   Path,
   YamlReader,
