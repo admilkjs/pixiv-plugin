@@ -1,4 +1,5 @@
 import { Request } from '#utils'
+
 /**
  * 刷新 Pixiv 的 access_token
  * @param {string} refreshToken - 使用的刷新令牌

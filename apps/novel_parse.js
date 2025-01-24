@@ -4,6 +4,7 @@ const novelReg =
   /(?:https?:\/\/)?(?:www\.)?pixiv\.net\/novel\/(?:series\/(\d+)|show\.php\?id=(\d+))/
 
 export default class extends plugin {
+
   constructor () {
     super({
       name: 'pixiv-plugin',

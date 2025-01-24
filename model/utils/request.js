@@ -34,8 +34,7 @@ class HttpClient {
     this.defaultHeaders = {
       'User-Agent': getRandomUserAgent(),
       'Content-Type': 'application/json',
-      'Accept-Language': 'en-US,en;q=0.9', // 随机选择语言设置
-      Referer: 'https://www.pixiv.net', // 模拟请求来源
+      Referer: 'https://www.pixiv.net', // 防盗链
       Origin: 'https://www.pixiv.net',
       Cookie: cookie
     }

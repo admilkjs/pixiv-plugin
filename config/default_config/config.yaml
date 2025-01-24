@@ -7,8 +7,8 @@ cookie: ""
 
 #* 翻译相关配置
 # 翻译API
-# 1.有道翻译
-translateAPI: 1
+translateAPI: "youdao"
 # 有道翻译
 youdao:
+  appKey: ""
   appSecret: ""
