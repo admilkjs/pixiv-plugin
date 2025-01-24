@@ -3,20 +3,39 @@ import { Config } from '#components'
 
 const config = Config.getDefOrConfig('config')
 
+// 通用选择平台翻译,传入文本,平台,翻译原语言,翻译目标语言
+export async function translate (query, platform, fromLang, toLang) {
+  let translator = null
+  switch (platform) {
+    case 'youdao':
+      translator = youdaoTranslateToChinese(query, fromLang, toLang)
+      break
+    case 'baidu':
+      // 暂存
+      break
+    default:
+      // 暂存
+      break
+  }
+  if (translator) {
+    return translator
+  } else {
+    throw new Error('不支持的翻译平台')
+  }
+}
 /**
  * 将文本翻译成中文-有道翻译
  * @param {string} query - 需要翻译的文本
  * @param {string} fromLang - 源语言，默认为 'auto'
  * @returns {Promise<string>} - 翻译后的中文文本
  */
-export async function youdaoTranslateToChinese (query, fromLang = 'auto') {
+export async function youdaoTranslateToChinese (query, fromLang = 'auto', toLang = 'zh-CHS') {
   const appKey = config.youdao.appKey
   const appSecret = config.youdao.appSecret
 
   // 生成签名
   const salt = Date.now().toString()
   const curtime = Math.round(Date.now() / 1000)
-  const toLang = 'zh-CHS'
 
   const truncate = (q) => {
     const len = q.length
