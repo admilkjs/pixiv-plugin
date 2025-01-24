@@ -5,7 +5,7 @@ import { Request } from "#utils";
  * @returns {Promise<Object>} 包含链接的对象
  * @throws {Error} 如果获取数据失败，抛出错误
  */
-export async function artworksDetail(pid) {
+export async function artworksUrl(pid) {
   let url = `https://www.pixiv.net/ajax/illust/${pid}/pages`;
   try {
     const response = await Request.request({ url });
@@ -31,5 +31,28 @@ export async function artworksDetail(pid) {
     });
   } catch (error) {
     logger.error("Error fetching data:", error.message);
+  }
+}
+export async function artworksInfo(pid) {
+  let url = `https://www.pixiv.net/ajax/illust/${pid}`;
+  try {
+    const response = await Request.request({ url });
+    if (response.error) throw new Error(response);
+    if (!Array.isArray(response.body.tags.tags))
+      response.body.tags.tags = [response.body.tags.tags];
+    let title = response.body.title;
+    let createDate = response.body.createDate;
+    let authorid = response.body.tags.authorId;
+    let tags = response.body.tags.tags.map((item) => {
+      return { tag: item.tag, en: item.translation.en };
+    });
+    return {
+      title,
+      createDate,
+      authorid,
+      tags,
+    }
+  } catch (error) {
+    logger.error("Error fetching data:", error);
   }
 }
