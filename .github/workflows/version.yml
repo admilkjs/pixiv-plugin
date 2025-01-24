@@ -5,8 +5,12 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
-  build:
+  release-please:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,12 +25,17 @@ jobs:
       - name: 安装依赖
         run: npm install
 
-      - name: 更新版本号和生成CHANGELOG
+      - name: 运行 release-please-action
+        uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          release-type: node
+
+      - name: 更新版本号、CHANGELOG 和 package.json
         run: |
-          npm version patch --no-git-tag-version
-          npx auto-changelog -p
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add .
-          git commit -m 'chore: 更新版本号和CHANGELOG'
+          git commit -m 'chore: 更新版本号'
           git push
+        if: ${{ steps.release.outputs.release_created }}
