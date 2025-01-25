@@ -2,6 +2,10 @@
 
 YunzaiBot-Pixiv插件
 
+# 插件交流群
+[792873018](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=ekuBxRh4wSSP315nn3gcBjWUI0bP3qQ4&authKey=c6orpTMGTM2JmAzGJvRslzhFH803%2Bcbp0%2B28Bpwr5E7oDtFZVO9isRjbugzbh%2FgR&noverify=0&group_code=792873018)
+
+
 ## 安装方式
 
 ```bash
