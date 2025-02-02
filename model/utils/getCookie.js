@@ -1,39 +1,53 @@
 import { Request } from '#utils'
+import moment from 'moment';
+import md5 from 'md5';
+import qs from 'qs';
+
+const CLIENT_ID = 'MOBrBDS8blbauoSck0ZfDbtuzpyT';
+const CLIENT_SECRET = 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj';
+const HASH_SECRET = '28c1fdd170a5204386cb1313c7077b34f83e4aaf4aa829ce78c231e05b0bae2c';
+
+function getDefaultHeaders() {
+  const datetime = moment().format();
+  return {
+    'X-Client-Time': datetime,
+    'X-Client-Hash': md5(`${datetime}${HASH_SECRET}`),
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
+}
 
 /**
- * 刷新 Pixiv 的 access_token
- * @param {string} refreshToken - 使用的刷新令牌
- * @returns {Promise<Object>} - 包含 access_token, refresh_token, expires_in, newCookie
+ * 通过 refreshToken 获取新的 cookie
+ * @param {string} refreshToken - 刷新令牌
+ * @returns {Promise<string>} 返回新的 cookie 字符串
  */
-export async function refreshPixivToken (refreshToken) {
+async function getCookie(refreshToken) {
+  const data = qs.stringify({
+    client_id: CLIENT_ID,
+    client_secret: CLIENT_SECRET,
+    get_secure_url: true,
+    include_policy: true,
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+  });
+
   try {
-    // 发起请求来刷新 token
-    const { data, headers } = await Request.request({
+    const response = await Request.request({
       method: 'POST',
       url: 'https://oauth.secure.pixiv.net/auth/token',
-      data: new URLSearchParams({
-        client_id: 'MOBrBDS8blbauoSck0ZfDbtuzpyT',
-        client_secret: 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj',
-        grant_type: 'refresh_token',
-        include_policy: 'true',
-        refresh_token: refreshToken
-      })
-    })
+      data: data,
+      headers: getDefaultHeaders()
+    });
 
-    const {
-      access_token: accessToken,
-      refresh_token: newRefreshToken,
-      expires_in: expiresIn
-    } = data
+    const { access_token, refresh_token } = response;
+    const cookie = `PHPSESSID=${access_token}; refresh_token=${refresh_token}`;
 
-    const newCookie = headers['set-cookie'] ? headers['set-cookie'].join('; ') : null
-
-    return { accessToken, refreshToken: newRefreshToken, expiresIn, newCookie }
+    logger.info('获取 Cookie 成功');
+    return cookie;
   } catch (error) {
-    logger.error(
-      'Error refreshing Pixiv token:',
-      error.response ? error.response.data : error.message
-    )
-    throw error
+    logger.error('获取 Cookie 失败:', error.message);
+    throw error;
   }
 }
+
+export default getCookie

@@ -138,9 +138,6 @@ class HttpClient {
 
 const proxy = config.proxy
 const cookie = config.cookie
-if (!cookie) {
-  throw new Error('Cookie都没有配置,你玩你妈呢')
-}
 const Request = new HttpClient(proxy, cookie)
 
 export default Request

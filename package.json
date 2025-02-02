@@ -15,7 +15,8 @@
         "puppeteer": "^24.1.0",
         "selenium-webdriver": "^4.28.1",
         "socks-proxy-agent": "^8.0.5",
-        "yaml": "^2.2.2"
+        "yaml": "^2.2.2",
+        "qs": "^6.14.0"
     },
     "imports": {
         "#components": "./components/index.js",
