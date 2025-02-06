@@ -7,5 +7,5 @@ import {
   artworksUrl as ArtWorks,
   artworksInfo as ArtWorksInfo
 } from './pixiv/artworks.js'
-import { refreshPixivToken as Token } from './utils/getCookie.js'
-export { Request, Novel, Novels, Token, ArtWorks, ArtWorksInfo }
+import getCookie from './utils/getCookie.js'
+export { Request, Novel, Novels, getCookie, ArtWorks, ArtWorksInfo }

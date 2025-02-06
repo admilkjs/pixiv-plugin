@@ -1,5 +1,5 @@
 import lodash from 'lodash'
-import Config from '#components'
+import { Config } from '#components'
 import config from './config.js'
 import other from './other.js'
 import push from './push.js'
@@ -12,7 +12,7 @@ export const schemas = [
   tips
 ].flat()
 
-export function getConfigData () {
+export function getConfigData() {
   return {
     config: Config.getDefOrConfig('config'),
     push: Config.getDefOrConfig('push'),
@@ -21,7 +21,7 @@ export function getConfigData () {
   }
 }
 
-export async function setConfigData (data, { Result }) {
+export async function setConfigData(data, { Result }) {
   let config = Config.getCfg()
 
   for (const key in data) {
