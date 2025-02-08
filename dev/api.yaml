@@ -1,10 +1,12 @@
+#*搜索
+
 searchTop: https://www.pixiv.net/ajax/search/top/${内容}?lang=zh
 search插画: https://www.pixiv.net/ajax/search/illustrations/${内容}?word=${内容}&order=date_d&mode=all&p=1&csw=0&s_mode=s_tag_full&type=illust_and_ugoira&lang=zh
 search漫画: https://www.pixiv.net/ajax/search/manga/${内容}?word=${内容}&order=date_d&mode=all&p=1&csw=0&s_mode=s_tag_full&type=manga&lang=zh
 search小说: https://www.pixiv.net/ajax/search/novels/${内容}?word=${内容}&order=date_d&mode=all&p=1&csw=0&s_mode=s_tag_full&gs=0&lang=zh
 #*信息
 
-userInfo: https://www.pixiv.net/ajax/user/164460/illusts?ids%5B%5D=122940665&ids%5B%5D=121933082&ids%5B%5D=118096675&ids%5B%5D=113808543&ids%5B%5D=112653342&ids%5B%5D=111494272&ids%5B%5D=110495137&ids%5B%5D=110054559&ids%5B%5D=109326789&ids%5B%5D=109270308&ids%5B%5D=108601303&ids%5B%5D=107912488&ids%5B%5D=107877663&ids%5B%5D=107838926&ids%5B%5D=107806034&ids%5B%5D=107771342&ids%5B%5D=107743103&ids%5B%5D=107705668&ids%5B%5D=107674103&lang=zh
+userInfo: https://www.pixiv.net/ajax/user/164460/illusts?ids%5B%5D=122940665&ids%5B%5D=121933082&lang=zh
 
 sensitiveFilterMode: https://www.pixiv.net/ajax/user/${用户ID}/profile/top?sensitiveFilterMode=userSetting&lang=zh
 
@@ -12,7 +14,7 @@ sensitiveFilterMode: https://www.pixiv.net/ajax/user/${用户ID}/profile/top?sen
 
 bookmarks: https://www.pixiv.net/ajax/user/${用户ID}/novels/bookmarks?tag=&offset=0&limit=30&rest=show&lang=zh
 
-sensitiveFilterMode: https://www.pixiv.net/ajax/user/${用户ID}/profile/all?sensitiveFilterMode=userSetting&lang=zh
+#sensitiveFilterMode: https://www.pixiv.net/ajax/user/${用户ID}/profile/all?sensitiveFilterMode=userSetting&lang=zh
 
 #*漫画
 
@@ -22,4 +24,4 @@ sensitiveFilterMode: https://www.pixiv.net/ajax/user/${用户ID}/profile/all?sen
 
 相关: https://www.pixiv.net/ajax/illust/${漫画ID}/recommend/init?limit=18&lang=zh
 
-/// 这都是什么狗吧东西
+# 这都是什么狗吧东西
