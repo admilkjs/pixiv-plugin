@@ -10,9 +10,16 @@ const HASH_SECRET = '28c1fdd170a5204386cb1313c7077b34f83e4aaf4aa829ce78c231e05b0
 function getDefaultHeaders() {
   const datetime = moment().format();
   return {
+    "User-Agent": "PixivIOSApp/7.13.3 (iOS 14.6; iPhone13,2)",
+    "Accept-Language": "zh-Hans-CN;q=1",
     'X-Client-Time': datetime,
     'X-Client-Hash': md5(`${datetime}${HASH_SECRET}`),
     'Content-Type': 'application/x-www-form-urlencoded',
+    "App-OS": "ios",
+    "App-OS-Version": "14.6",
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Accept": "*/*",
+    "Connection": "Keep-Alive"
   };
 }
 
@@ -40,6 +47,7 @@ async function getCookie(refreshToken) {
     });
 
     const { access_token, refresh_token } = response;
+    logger.info('[pixiv] [getCookie]response:', response);
     const cookie = `PHPSESSID=${access_token}; refresh_token=${refresh_token}`;
 
     logger.info('获取 Cookie 成功');
