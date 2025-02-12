@@ -46,7 +46,7 @@ export async function artworksInfo(pid) {
     let createDate = response.body.createDate;
     let authorid = response.body.tags.authorId;
     let tags = response.body.tags.tags.map((item) => {
-      return { tag: item.tag, en: item.translation.en };
+      return { tag: item.tag, en: item.translation?.en || null };
     });
     return {
       title,
@@ -56,5 +56,15 @@ export async function artworksInfo(pid) {
     };
   } catch (error) {
     Logger.error("Error fetching data:", error);
+  }
+}
+export async function relatedIllust(pid) {
+  let url = `https://www.pixiv.net/ajax/illust/${pid}/recommend/init?limit=20&lang=zh`;
+  try {
+    const response = await Request.request({ url });
+    if (response.error) throw new Error(response);
+    return response.body.illusts.length != 0 ?response.body:null
+  } catch (error) {
+    Logger.error("获取相关插画失败", error);
   }
 }

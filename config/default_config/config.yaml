@@ -2,7 +2,7 @@
 proxy: ""
 # pixiv的refreshToken
 refreshToken: ""
-# Pixiv的Cookie
+# Pixiv的Cookie,填写时不需要引号
 cookie: ""
 
 #* 翻译相关配置

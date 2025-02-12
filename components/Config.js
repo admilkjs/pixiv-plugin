@@ -159,11 +159,13 @@ class Config {
     let other = this.getDefOrConfig("other");
     let push = this.getDefOrConfig("push");
     let tips = this.getDefOrConfig("tips");
+    let parse = this.getDefOrConfig("parse");
     return {
       ...config,
       ...other,
       ...push,
       ...tips,
+      ...parse,
     };
   }
 

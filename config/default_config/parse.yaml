@@ -1,0 +1,13 @@
+#开关类
+
+# 漫画解析开关
+artworks_parse: true
+# 小说解析开关
+novels_parse: true
+# 用户信息解析开关
+users_parse: true
+
+#*其他
+
+# 搜索插画时是否搜索相关插画内容
+search_related: true

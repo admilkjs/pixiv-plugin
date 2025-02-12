@@ -1,5 +1,6 @@
-import { ArtWorks, ArtWorksInfo } from "#model";
-
+import { ArtWorks, ArtWorksInfo, Related } from "#model";
+import { Config } from "#components";
+import { Logger } from "#utils";
 const artworksReg = /https:\/\/www\.pixiv\.net\/artworks\/(\d+).*/;
 
 export default class extends plugin {
@@ -19,6 +20,9 @@ export default class extends plugin {
   }
 
   async parse(e) {
+    let config = Config.getConfig("parse")
+    if (!config.artworks_parse)
+      return false
     const match = e.msg.match(artworksReg);
     if (match) {
       const pid = match[1];
@@ -30,12 +34,27 @@ export default class extends plugin {
           `标题: ${info.title}`,
           `作者pid: ${info.authorid}`,
           `创建日期: ${info.createDate}`,
-          `标签: ${info.tags.map((i) => `${i.tag}(${i.en})`).join(", ")}`,
+          `标签: ${info.tags.map((i) => `${i.tag}${i.en ? `(${i.en})` : ''}`).join(", ")}`,
         ];
         images.unshift(...infomsg);
+        if (config.search_related){
+          images.push("相关作品:")
+          let related = await Related(pid);
+            if (related) {
+            images.push(...related.illusts.flatMap((info) => [
+              `标题: ${info.title}`,
+              `作者: ${info.userName}(${info.userId})`,
+              `创建日期: ${info.createDate}`,
+              `标签: ${info.tags.join(", ")}`,
+              `页数: ${info.pageCount}`
+            ]));
+            }
+        }
         const forwardMsg = await e.runtime.common.makeForwardMsg(e, images);
         await e.reply(forwardMsg);
+        return false
       } catch (error) {
+        Logger.error(error)
         await e.reply("获取作品信息时出错，请稍后再试。");
       }
     }
