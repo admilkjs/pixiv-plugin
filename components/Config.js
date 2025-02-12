@@ -1,45 +1,45 @@
-import YAML from 'yaml'
-import chokidar from 'chokidar'
-import fs from 'node:fs'
-import YamlReader from './YamlReader.js'
-import _ from 'lodash'
-import Path from './Path.js'
-
-const PluginPath = Path.PluginPath
+import YAML from "yaml";
+import chokidar from "chokidar";
+import fs from "node:fs";
+import YamlReader from "./YamlReader.js";
+import _ from "lodash";
+import Path from "./Path.js";
+import { Logger } from "#utils";
+const PluginPath = Path.PluginPath;
 
 class Config {
-  constructor () {
-    this.config = {}
-    this.oldConfig = {}
+  constructor() {
+    this.config = {};
+    this.oldConfig = {};
     /** 监听文件 */
-    this.watcher = { config: {}, defSet: {} }
+    this.watcher = { config: {}, defSet: {} };
 
-    this.initCfg()
+    this.initCfg();
   }
 
-  initCfg () {
-    let path = `${PluginPath}/config/config/`
-    if (!fs.existsSync(path)) fs.mkdirSync(path)
-    let pathDef = `${PluginPath}/config/default_config/`
+  initCfg() {
+    let path = `${PluginPath}/config/config/`;
+    if (!fs.existsSync(path)) fs.mkdirSync(path);
+    let pathDef = `${PluginPath}/config/default_config/`;
     const files = fs
       .readdirSync(pathDef)
-      .filter((file) => file.endsWith('.yaml'))
+      .filter((file) => file.endsWith(".yaml"));
     for (let file of files) {
       if (!fs.existsSync(`${path}${file}`)) {
-        fs.copyFileSync(`${pathDef}${file}`, `${path}${file}`)
+        fs.copyFileSync(`${pathDef}${file}`, `${path}${file}`);
       } else {
-        const config = YAML.parse(fs.readFileSync(`${path}${file}`, 'utf8'))
+        const config = YAML.parse(fs.readFileSync(`${path}${file}`, "utf8"));
         const defConfig = YAML.parse(
-          fs.readFileSync(`${pathDef}${file}`, 'utf8')
-        )
+          fs.readFileSync(`${pathDef}${file}`, "utf8"),
+        );
         const { differences, result } = this.mergeObjectsWithPriority(
           config,
-          defConfig
-        )
+          defConfig,
+        );
         if (differences) {
-          fs.copyFileSync(`${pathDef}${file}`, `${path}${file}`)
+          fs.copyFileSync(`${pathDef}${file}`, `${path}${file}`);
           for (const key in result) {
-            this.modify(file.replace('.yaml', ''), key, result[key])
+            this.modify(file.replace(".yaml", ""), key, result[key]);
           }
         }
       }
@@ -51,17 +51,17 @@ class Config {
    * @param type 默认跑配置-defSet，用户配置-config
    * @param name 名称
    */
-  getYaml (type, name) {
-    let file = `${PluginPath}/config/${type}/${name}.yaml`
-    let key = `${type}.${name}`
+  getYaml(type, name) {
+    let file = `${PluginPath}/config/${type}/${name}.yaml`;
+    let key = `${type}.${name}`;
 
-    if (this.config[key]) return this.config[key]
+    if (this.config[key]) return this.config[key];
 
-    this.config[key] = YAML.parse(fs.readFileSync(file, 'utf8'))
+    this.config[key] = YAML.parse(fs.readFileSync(file, "utf8"));
 
-    this.watch(file, name, type)
+    this.watch(file, name, type);
 
-    return this.config[key]
+    return this.config[key];
   }
 
   /**
@@ -69,10 +69,10 @@ class Config {
    * @param {string} name - 配置名称
    * @returns {object} - 合并后的配置对象
    */
-  getDefOrConfig (name) {
-    let def = this.getdefSet(name)
-    let config = this.getConfig(name)
-    return { ...def, ...config }
+  getDefOrConfig(name) {
+    let def = this.getdefSet(name);
+    let config = this.getConfig(name);
+    return { ...def, ...config };
   }
 
   /**
@@ -80,8 +80,8 @@ class Config {
    * @param {string} name - 配置名称
    * @returns {object} - 默认配置对象
    */
-  getdefSet (name) {
-    return this.getYaml('default_config', name)
+  getdefSet(name) {
+    return this.getYaml("default_config", name);
   }
 
   /**
@@ -89,80 +89,82 @@ class Config {
    * @param {string} name - 配置名称
    * @returns {object} - 用户配置对象
    */
-  getConfig (name) {
-    return this.getYaml('config', name)
+  getConfig(name) {
+    return this.getYaml("config", name);
   }
 
   /** 监听配置文件 */
-  watch (file, name, type = 'default_config') {
-    let key = `${type}.${name}`
-    if (!this.oldConfig[key]) { this.oldConfig[key] = _.cloneDeep(this.config[key]) }
-    if (this.watcher[key]) return
+  watch(file, name, type = "default_config") {
+    let key = `${type}.${name}`;
+    if (!this.oldConfig[key]) {
+      this.oldConfig[key] = _.cloneDeep(this.config[key]);
+    }
+    if (this.watcher[key]) return;
 
-    const watcher = chokidar.watch(file)
-    watcher.on('change', async (path) => {
-      delete this.config[key]
-      if (typeof Bot == 'undefined') return
-      logger.mark(`[memz-plugin][修改配置文件][${type}][${name}]`)
+    const watcher = chokidar.watch(file);
+    watcher.on("change", async (path) => {
+      delete this.config[key];
+      if (typeof Bot == "undefined") return;
+      Logger.mark(`[修改配置文件][${type}][${name}]`);
 
-      if (name == 'config') {
-        const oldConfig = this.oldConfig[key]
-        delete this.oldConfig[key]
-        const newConfig = this.getYaml(type, name)
-        const object = this.findDifference(oldConfig, newConfig)
+      if (name == "config") {
+        const oldConfig = this.oldConfig[key];
+        delete this.oldConfig[key];
+        const newConfig = this.getYaml(type, name);
+        const object = this.findDifference(oldConfig, newConfig);
         // console.log(object);
         for (const key in object) {
           if (Object.hasOwnProperty.call(object, key)) {
-            const value = object[key]
-            const arr = key.split('.')
-            if (arr[0] !== 'servers') continue
-            let data = newConfig.servers[arr[1]]
-            if (typeof data === 'undefined') data = oldConfig.servers[arr[1]]
+            const value = object[key];
+            const arr = key.split(".");
+            if (arr[0] !== "servers") continue;
+            let data = newConfig.servers[arr[1]];
+            if (typeof data === "undefined") data = oldConfig.servers[arr[1]];
             const target = {
               type: null,
-              data
-            }
+              data,
+            };
             if (
-              typeof value.newValue === 'object' &&
-              typeof value.oldValue === 'undefined'
+              typeof value.newValue === "object" &&
+              typeof value.oldValue === "undefined"
             ) {
-              target.type = 'add'
+              target.type = "add";
             } else if (
-              typeof value.newValue === 'undefined' &&
-              typeof value.oldValue === 'object'
+              typeof value.newValue === "undefined" &&
+              typeof value.oldValue === "object"
             ) {
-              target.type = 'del'
+              target.type = "del";
             } else if (
               value.newValue === true &&
               (value.oldValue === false ||
-                typeof value.oldValue === 'undefined')
+                typeof value.oldValue === "undefined")
             ) {
-              target.type = 'close'
+              target.type = "close";
             } else if (
               value.newValue === false &&
-              (value.oldValue === true || typeof value.oldValue === 'undefined')
+              (value.oldValue === true || typeof value.oldValue === "undefined")
             ) {
-              target.type = 'open'
+              target.type = "open";
             }
           }
         }
       }
-    })
+    });
 
-    this.watcher[key] = watcher
+    this.watcher[key] = watcher;
   }
 
-  getCfg () {
-    let config = this.getDefOrConfig('config')
-    let other = this.getDefOrConfig('other')
-    let push = this.getDefOrConfig('push')
-    let tips = this.getDefOrConfig('tips')
+  getCfg() {
+    let config = this.getDefOrConfig("config");
+    let other = this.getDefOrConfig("other");
+    let push = this.getDefOrConfig("push");
+    let tips = this.getDefOrConfig("tips");
     return {
       ...config,
       ...other,
       ...push,
-      ...tips
-    }
+      ...tips,
+    };
   }
 
   /**
@@ -172,11 +174,11 @@ class Config {
    * @param {String|Number} value 修改的value值
    * @param {'config'|'default_config'} type 配置文件或默认
    */
-  modify (name, key, value, type = 'config') {
-    let path = `${PluginPath}/config/${type}/${name}.yaml`
-    new YamlReader(path).set(key, value)
-    this.oldConfig[key] = _.cloneDeep(this.config[key])
-    delete this.config[`${type}.${name}`]
+  modify(name, key, value, type = "config") {
+    let path = `${PluginPath}/config/${type}/${name}.yaml`;
+    new YamlReader(path).set(key, value);
+    this.oldConfig[key] = _.cloneDeep(this.config[key]);
+    delete this.config[`${type}.${name}`];
   }
 
   /**
@@ -187,23 +189,23 @@ class Config {
    * @param {'add'|'del'} category 类别 add or del
    * @param {'config'|'default_config'} type 配置文件或默认
    */
-  modifyarr (name, key, value, category = 'add', type = 'config') {
-    let path = `${PluginPath}/config/${type}/${name}.yaml`
-    let yaml = new YamlReader(path)
-    if (category == 'add') {
-      yaml.addIn(key, value)
+  modifyarr(name, key, value, category = "add", type = "config") {
+    let path = `${PluginPath}/config/${type}/${name}.yaml`;
+    let yaml = new YamlReader(path);
+    if (category == "add") {
+      yaml.addIn(key, value);
     } else {
-      let index = yaml.jsonData[key].indexOf(value)
-      yaml.delete(`${key}.${index}`)
+      let index = yaml.jsonData[key].indexOf(value);
+      yaml.delete(`${key}.${index}`);
     }
   }
 
-  setArr (name, key, item, value, type = 'config') {
-    let path = `${PluginPath}/config/${type}/${name}.yaml`
-    let yaml = new YamlReader(path)
-    let arr = yaml.get(key).slice()
-    arr[item] = value
-    yaml.set(key, arr)
+  setArr(name, key, item, value, type = "config") {
+    let path = `${PluginPath}/config/${type}/${name}.yaml`;
+    let yaml = new YamlReader(path);
+    let arr = yaml.get(key).slice();
+    arr[item] = value;
+    yaml.set(key, arr);
   }
 
   /**
@@ -213,51 +215,51 @@ class Config {
    * @param {*} parentKey
    * @returns
    */
-  findDifference (obj1, obj2, parentKey = '') {
-    const result = {}
+  findDifference(obj1, obj2, parentKey = "") {
+    const result = {};
     for (const key in obj1) {
-      const fullKey = parentKey ? `${parentKey}.${key}` : key
+      const fullKey = parentKey ? `${parentKey}.${key}` : key;
       if (_.isObject(obj1[key]) && _.isObject(obj2[key])) {
-        const diff = this.findDifference(obj1[key], obj2[key], fullKey)
+        const diff = this.findDifference(obj1[key], obj2[key], fullKey);
         if (!_.isEmpty(diff)) {
-          Object.assign(result, diff)
+          Object.assign(result, diff);
         }
       } else if (!_.isEqual(obj1[key], obj2[key])) {
-        result[fullKey] = { oldValue: obj1[key], newValue: obj2[key] }
+        result[fullKey] = { oldValue: obj1[key], newValue: obj2[key] };
       }
     }
     for (const key in obj2) {
       if (!Object.prototype.hasOwnProperty.call(obj1, key)) {
-        const fullKey = parentKey ? `${parentKey}.${key}` : key
-        result[fullKey] = { oldValue: undefined, newValue: obj2[key] }
+        const fullKey = parentKey ? `${parentKey}.${key}` : key;
+        result[fullKey] = { oldValue: undefined, newValue: obj2[key] };
       }
     }
-    return result
+    return result;
   }
 
-  mergeObjectsWithPriority (objA, objB) {
-    let differences = false
+  mergeObjectsWithPriority(objA, objB) {
+    let differences = false;
 
-    function customizer (objValue, srcValue, key, object, source, stack) {
+    function customizer(objValue, srcValue, key, object, source, stack) {
       if (_.isArray(objValue) && _.isArray(srcValue)) {
-        return objValue
+        return objValue;
       } else if (_.isPlainObject(objValue) && _.isPlainObject(srcValue)) {
         if (!_.isEqual(objValue, srcValue)) {
-          return _.mergeWith({}, objValue, srcValue, customizer)
+          return _.mergeWith({}, objValue, srcValue, customizer);
         }
       } else if (!_.isEqual(objValue, srcValue)) {
-        differences = true
-        return objValue !== undefined ? objValue : srcValue
+        differences = true;
+        return objValue !== undefined ? objValue : srcValue;
       }
-      return objValue !== undefined ? objValue : srcValue
+      return objValue !== undefined ? objValue : srcValue;
     }
 
-    let result = _.mergeWith({}, objA, objB, customizer)
+    let result = _.mergeWith({}, objA, objB, customizer);
 
     return {
       differences,
-      result
-    }
+      result,
+    };
   }
 }
-export default new Config()
+export default new Config();

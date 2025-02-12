@@ -1,9 +1,9 @@
-import pluginInfo from './pluginInfo.js'
-import configInfo from './configInfo.js'
+import pluginInfo from "./pluginInfo.js";
+import configInfo from "./configInfo.js";
 
-export function supportGuoba () {
+export function supportGuoba() {
   return {
     pluginInfo,
-    configInfo
-  }
+    configInfo,
+  };
 }

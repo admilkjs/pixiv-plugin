@@ -6,6 +6,7 @@ search漫画: https://www.pixiv.net/ajax/search/manga/${内容}?word=${内容}&o
 search小说: https://www.pixiv.net/ajax/search/novels/${内容}?word=${内容}&order=date_d&mode=all&p=1&csw=0&s_mode=s_tag_full&gs=0&lang=zh
 #*信息
 
+# 这几把啥
 userInfo: https://www.pixiv.net/ajax/user/164460/illusts?ids%5B%5D=122940665&ids%5B%5D=121933082&lang=zh
 
 sensitiveFilterMode: https://www.pixiv.net/ajax/user/${用户ID}/profile/top?sensitiveFilterMode=userSetting&lang=zh
