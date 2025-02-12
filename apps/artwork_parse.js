@@ -47,6 +47,7 @@ export default class extends plugin {
               `创建日期: ${info.createDate}`,
               `标签: ${info.tags.join(", ")}`,
               `页数: ${info.pageCount}`
+              `链接: https://www.pixiv.net/artworks/${info.id}`
             ]));
             }
         }
