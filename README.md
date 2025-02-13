@@ -16,9 +16,6 @@ git clone https://github.com/admilkjs/pixiv-plugin ./plugins/pixiv-plugin
 
 - 解析pixiv小说内容
 - 解析pixiv小说系列
-
-## 后续会添加的功能
-
 - 解析pixiv插画内容
 - 解析pixiv漫画
 - 解析pixiv系列插画
