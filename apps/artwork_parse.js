@@ -42,13 +42,13 @@ export default class extends plugin {
           let related = await Related(pid);
             if (related) {
             images.push(...related.illusts.map((info) => [
-              `标题: ${info.title}`,
-              `作者: ${info.userName}(${info.userId})`,
-              `创建日期: ${info.createDate}`,
-              `标签: ${info.tags.join(", ")}`,
-              `页数: ${info.pageCount}`,
-              `链接: https://www.pixiv.net/artworks/${info.id}`
-            ]));
+             `标题: ${info.title}\n`,
+             `作者: ${info.userName}(${info.userId})\n`,
+             `创建日期: ${info.createDate}\n`,
+             `标签: ${info.tags.join(", ")}\n`,
+             `页数: ${info.pageCount}\n`,
+             `链接: https://www.pixiv.net/artworks/${info.id}\n`
+              ]));
             }
         }
         const forwardMsg = await e.runtime.common.makeForwardMsg(e, images);
