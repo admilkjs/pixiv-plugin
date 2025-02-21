@@ -1,7 +1,7 @@
 import { Novel, Novels } from "#model";
 
 const novelReg =
-  /(?:https?:\/\/)?(?:www\.)?pixiv\.net\/novel\/(?:series\/(\d+)|show\.php\?id=(\d+))/;
+  /(?:https?:\/\/)?(?:www\.)?pixiv\.net\/novel\/(?:series\/(\d+)|show\.php\?id=(\d+))/i;
 
 export default class extends plugin {
   constructor() {
