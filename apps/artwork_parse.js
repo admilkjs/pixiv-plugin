@@ -41,7 +41,7 @@ export default class extends plugin {
           images.push("相关作品:")
           let related = await Related(pid);
             if (related) {
-            images.push(...related.illusts.flatMap((info) => [
+            images.push(...related.illusts.map((info) => [
               `标题: ${info.title}`,
               `作者: ${info.userName}(${info.userId})`,
               `创建日期: ${info.createDate}`,
