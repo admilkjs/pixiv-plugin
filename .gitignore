@@ -1,6 +1,10 @@
 # config
 config/config
 
+# 编辑器配置
+.vscode
+.idea
+
 # Logs
 logs
 *.log

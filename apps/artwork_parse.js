@@ -1,7 +1,7 @@
 import { ArtWorks, ArtWorksInfo, Related } from "#model";
 import { Config } from "#components";
 import { Logger } from "#utils";
-const artworksReg = /https:\/\/www\.pixiv\.net\/artworks\/(\d+).*/;
+const artworksReg = /https:\/\/www\.pixiv\.net\/artworks\/(\d+).*/i;
 
 export default class extends plugin {
   constructor() {
