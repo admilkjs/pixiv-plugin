@@ -11,7 +11,7 @@ YunzaiBot-Pixiv插件
 ```bash
 git clone https://github.com/admilkjs/pixiv-plugin ./plugins/pixiv-plugin
 如果网络不好可使用代理下载
-git clone https://ghproxy.lyln.us.kg/https://github.com/admilkjs/pixiv-plugin ./plugins/pixiv-plugin
+git clone https://ghfast.top/https://github.com/admilkjs/pixiv-plugin ./plugins/pixiv-plugin
 ```
 
 ## 功能
