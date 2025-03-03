@@ -10,11 +10,11 @@ YunzaiBot-Pixiv插件
 
 在Yunzai根目录执行以下指令
 ```
-git clone https://github.com/admilkjs/pixiv-plugin ./plugins/pixiv-plugin
+git clone --depth=1 https://github.com/admilkjs/pixiv-plugin.git ./plugins/pixiv-plugin
 ```
 如果网络不好可使用代理加速
 ```
-git clone https://ghfast.top/https://github.com/admilkjs/pixiv-plugin ./plugins/pixiv-plugin
+git clone --depth=1 https://ghfast.top/https://github.com/admilkjs/pixiv-plugin.git ./plugins/pixiv-plugin
 ```
 安装依赖
 ```
