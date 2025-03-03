@@ -8,10 +8,17 @@ YunzaiBot-Pixiv插件
 
 ## 安装方式
 
-```bash
+在Yunzai根目录执行以下指令
+```
 git clone https://github.com/admilkjs/pixiv-plugin ./plugins/pixiv-plugin
-如果网络不好可使用代理下载
+```
+如果网络不好可使用代理加速
+```
 git clone https://ghfast.top/https://github.com/admilkjs/pixiv-plugin ./plugins/pixiv-plugin
+```
+安装依赖
+```
+pnpm install --filter=pixiv-plugin
 ```
 
 ## 功能
