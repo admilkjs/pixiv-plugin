@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/admilkjs/pixiv-plugin/compare/v1.6.0...v1.6.1) (2025-03-04)
+
+
+### Bug Fixes
+
+* 导入 ([203c426](https://github.com/admilkjs/pixiv-plugin/commit/203c426f2e60b33ed3fd10fd9c10829d3c4de673))
+
 ## [1.6.0](https://github.com/admilkjs/pixiv-plugin/compare/v1.5.0...v1.6.0) (2025-02-28)
 
 
