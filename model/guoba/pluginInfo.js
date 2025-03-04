@@ -1,4 +1,4 @@
-import Path from "#components";
+import { Path } from "#components";
 
 export default {
   name: "Pixiv-plugin",
