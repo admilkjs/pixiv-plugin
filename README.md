@@ -8,17 +8,23 @@ YunzaiBot-Pixiv插件
 
 ## 安装方式
 
-```bash
-git clone https://github.com/admilkjs/pixiv-plugin ./plugins/pixiv-plugin
+在Yunzai根目录执行以下指令
+```
+git clone --depth=1 https://github.com/admilkjs/pixiv-plugin.git ./plugins/pixiv-plugin
+```
+如果网络不好可使用代理加速
+```
+git clone --depth=1 https://ghfast.top/https://github.com/admilkjs/pixiv-plugin.git ./plugins/pixiv-plugin
+```
+安装依赖
+```
+pnpm install --filter=pixiv-plugin
 ```
 
 ## 功能
 
 - 解析pixiv小说内容
 - 解析pixiv小说系列
-
-## 后续会添加的功能
-
 - 解析pixiv插画内容
 - 解析pixiv漫画
 - 解析pixiv系列插画

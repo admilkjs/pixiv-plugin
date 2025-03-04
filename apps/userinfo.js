@@ -1,6 +1,6 @@
 import { User } from "#model";
 import { Logger } from "#utils";
-const usersReg = /https:\/\/www\.pixiv\.net\/users\/(\d+).*/;
+const usersReg = /https:\/\/www\.pixiv\.net\/users\/(\d+).*/i;
 
 export default class extends plugin {
   constructor() {
