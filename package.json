@@ -9,14 +9,16 @@
     "dependencies": {
         "axios": "^1.7.9",
         "cheerio": "1.0.0-rc.12",
+        "child_process": "^1.0.2",
         "http-proxy-agent": "^7.0.2",
         "https-proxy-agent": "7.0.5",
+        "img2pdf": "^1.0.11",
         "jsdom": "^26.0.0",
         "puppeteer": "^24.1.0",
+        "qs": "^6.14.0",
         "selenium-webdriver": "^4.28.1",
         "socks-proxy-agent": "^8.0.5",
-        "yaml": "^2.2.2",
-        "qs": "^6.14.0"
+        "yaml": "^2.2.2"
     },
     "imports": {
         "#components": "./components/index.js",
@@ -32,5 +34,12 @@
         "Pixiv",
         "Pixiv-Plugin",
         "AdmilkJS"
-    ]
+    ],
+    "prettier": {
+        "useTabs": false,
+        "tabWidth": 4,
+        "printWidth": 120,
+        "singleQuote": true,
+        "semi": false
+    }
 }

@@ -20,9 +20,8 @@ export default class extends plugin {
   }
 
   async parse(e) {
-    let config = Config.getConfig("parse")
-    if (!config.artworks_parse)
-      return false
+    let config = Config.getConfig("parse");
+    if (!config.artworks_parse) return false;
     const match = e.msg.match(artworksReg);
     if (match) {
       const pid = match[1];
@@ -34,28 +33,30 @@ export default class extends plugin {
           `标题: ${info.title}`,
           `作者pid: ${info.authorid}`,
           `创建日期: ${info.createDate}`,
-          `标签: ${info.tags.map((i) => `${i.tag}${i.en ? `(${i.en})` : ''}`).join(", ")}`,
+          `标签: ${info.tags.map((i) => `${i.tag}${i.en ? `(${i.en})` : ""}`).join(", ")}`,
         ];
         images.unshift(...infomsg);
-        if (config.search_related){
-          images.push("相关作品:")
+        if (config.search_related) {
+          images.push("相关作品:");
           let related = await Related(pid);
-            if (related) {
-            images.push(...related.illusts.map((info) => [
-             `标题: ${info.title}\n`,
-             `作者: ${info.userName}(${info.userId})\n`,
-             `创建日期: ${info.createDate}\n`,
-             `标签: ${info.tags.join(", ")}\n`,
-             `页数: ${info.pageCount}\n`,
-             `链接: https://www.pixiv.net/artworks/${info.id}\n`
-              ]));
-            }
+          if (related) {
+            images.push(
+              ...related.illusts.map((info) => [
+                `标题: ${info.title}\n`,
+                `作者: ${info.userName}(${info.userId})\n`,
+                `创建日期: ${info.createDate}\n`,
+                `标签: ${info.tags.join(", ")}\n`,
+                `页数: ${info.pageCount}\n`,
+                `链接: https://www.pixiv.net/artworks/${info.id}\n`,
+              ]),
+            );
+          }
         }
         const forwardMsg = await e.runtime.common.makeForwardMsg(e, images);
         await e.reply(forwardMsg);
-        return false
+        return false;
       } catch (error) {
-        Logger.error(error)
+        Logger.error(error);
         await e.reply("获取作品信息时出错，请稍后再试。");
       }
     }

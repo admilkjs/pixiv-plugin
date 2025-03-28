@@ -9,4 +9,3 @@ export async function usersInfo(uid) {
     Logger.error("获取用户信息失败", error);
   }
 }
-

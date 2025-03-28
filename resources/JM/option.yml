@@ -1,0 +1,13 @@
+download:
+  cache: true
+  image:
+    decode: true
+    suffix: .jpg
+dir_rule:
+  base_dir: null
+
+plugins:
+  after_photo:
+    - plugin: img2pdf
+      kwargs:
+        pdf_dir: null

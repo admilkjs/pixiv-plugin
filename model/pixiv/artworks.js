@@ -63,7 +63,7 @@ export async function relatedIllust(pid) {
   try {
     const response = await Request.request({ url });
     if (response.error) throw new Error(response);
-    return response.body.illusts.length != 0 ?response.body:null
+    return response.body.illusts.length != 0 ? response.body : null;
   } catch (error) {
     Logger.error("获取相关插画失败", error);
   }

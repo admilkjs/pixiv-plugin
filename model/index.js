@@ -6,8 +6,17 @@ import {
 import {
   artworksUrl as ArtWorks,
   artworksInfo as ArtWorksInfo,
-  relatedIllust as Related
+  relatedIllust as Related,
 } from "./pixiv/artworks.js";
 import getCookie from "./utils/getCookie.js";
 import { usersInfo as User } from "./pixiv/users.js";
-export { Request, Novel, Novels, getCookie, ArtWorks, ArtWorksInfo, User, Related};
+export {
+  Request,
+  Novel,
+  Novels,
+  getCookie,
+  ArtWorks,
+  ArtWorksInfo,
+  User,
+  Related,
+};
