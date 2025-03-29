@@ -58,18 +58,22 @@ export class JMComicPlugin extends plugin {
                     if (cfg.sendAsLink) {
                         let ip = cfg.host !== ""? cfg.host : "127.0.0.1"
                         let pass = randomUUID().split('-')[0]
+                        let time = cfg.time
                         await e.reply([
-                            '发送PDF失败,转为http链接',
+                            `发送PDF失败,转为http链接...有效期${cfg.time}分钟`,
                             `${
                                 e.bot.adapter?.name == 'QQBot'
                                     ? `http://${ip}:${Bot.server.address().port}/pixiv/jm/`.toUpperCase() + pass
                                     : `http://${ip}:${Bot.server.address().port}/pixiv/jm/${pass}`
                             }`,
-                        ])
+                        ].join("\n"))
                         keys[pass] = {
                             name: id,
                             encrypted: true,
                         }
+                        setTimeout(() => {
+                            delete keys[pass]
+                        }, 1000  * 60 * cfg.time)
                     } else {
                         await e.reply('PDF发送失败')
                     }

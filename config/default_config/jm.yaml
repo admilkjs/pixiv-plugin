@@ -4,5 +4,7 @@ maxSize: 100
 proxy: ""
 # 发送失败是否转为http链接发送
 sendAsLink: false
+# 链接过期时间 单位分钟
+time: 5
 # 本机公网地址 or 域名
 host: ""
