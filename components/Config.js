@@ -4,7 +4,7 @@ import fs from "node:fs";
 import YamlReader from "./YamlReader.js";
 import _ from "lodash";
 import Path from "./Path.js";
-import { Logger } from "#utils";
+import Logger from "../model/utils/Logger.js";
 const PluginPath = Path.PluginPath;
 
 class Config {

@@ -1,4 +1,5 @@
-import { User } from "#model";
+import { Pixiv } from "#model";
+const { User } = Pixiv;
 import { Logger } from "#utils";
 const usersReg = /https:\/\/www\.pixiv\.net\/users\/(\d+).*/i;
 

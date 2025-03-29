@@ -1,5 +1,5 @@
-import { Novel, Novels } from "#model";
-
+import { Pixiv } from "#model";
+const { Novel, Novels } = Pixiv
 const novelReg =
   /(?:https?:\/\/)?(?:www\.)?pixiv\.net\/novel\/(?:series\/(\d+)|show\.php\?id=(\d+))/i;
 

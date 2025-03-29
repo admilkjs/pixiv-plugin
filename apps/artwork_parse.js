@@ -1,4 +1,5 @@
-import { ArtWorks, ArtWorksInfo, Related } from "#model";
+import { Pixiv } from "#model";
+const { ArtWorks, ArtWorksInfo, Related } = Pixiv;
 import { Config } from "#components";
 import { Logger } from "#utils";
 const artworksReg = /https:\/\/www\.pixiv\.net\/artworks\/(\d+).*/i;
