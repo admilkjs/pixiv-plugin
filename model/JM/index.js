@@ -20,6 +20,42 @@ const Configs = {
 }
 
 let Cfg_yaml = new YamlReader(`${Configs.COMIC_BASE_DIR}/option.yml`, true)
+export const check = async function check() {
+    const execPromise = promisify(execFile)
+    try {
+        await execPromise('python', ['--version'])
+        Logger.info('Python 已安装')
+    } catch (err) {
+        Logger.error('Python 未安装或未添加到环境变量中，请先安装 Python')
+        throw new Error('Python 未安装')
+    }
+    try {
+        await execPromise('python', ['-m', 'pip', 'show', 'jmcomic'])
+        Logger.info('jmcomic 已安装')
+    } catch {
+        Logger.warn('jmcomic 未安装，正在安装...')
+        try {
+            await execPromise('python', ['-m', 'pip', 'install', 'jmcomic', '--U', '--break-system-packages'])
+            Logger.info('jmcomic 安装成功')
+        } catch (installErr) {
+            Logger.error('安装 jmcomic 失败:', installErr)
+            throw new Error('安装 jmcomic 失败')
+        }
+    }
+    try {
+        await execPromise('python', ['-m', 'pip', 'show', 'PyPDF2', '-U', '--break-system-packages'])
+        Logger.info('PyPDF2 已安装')
+    } catch {
+        Logger.warn('PyPDF2 未安装，正在安装...')
+        try {
+            await execPromise('python', ['-m', 'pip', 'install', 'Py2PDF', '--upgrade'])
+            Logger.info('Py2PDF 安装成功')
+        } catch (installErr) {
+            Logger.error('安装 Py2PDF 失败:', installErr)
+            throw new Error('安装 Py2PDF 失败')
+        }
+    }
+}
 
 class ComicDownloader {
     static async downloadComic(comicId) {
