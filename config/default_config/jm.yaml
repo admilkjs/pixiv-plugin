@@ -1,2 +1,4 @@
 # PDF最大大小 单位 MB
 maxSize: 100
+# http/s代理地址
+proxy: ""

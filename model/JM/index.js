@@ -68,10 +68,13 @@ class ComicDownloader {
 
         let dir_rule = Cfg_yaml.get('dir_rule')
         let plugins = Cfg_yaml.get('plugins')
+        let postman = Cfg_yaml.get('postman')
+        cfg.proxy !== ""? postman.meta_data.proxies = cfg.proxy : postman.meta_data.proxies = "system"
         plugins.after_photo[0].kwargs.pdf_dir = pdfDir
         dir_rule.base_dir = comicDir
         Cfg_yaml.set('dir_rule', dir_rule)
         Cfg_yaml.set('plugins', plugins)
+        Cfg_yaml.set('postman', postman)
         Cfg_yaml.save()
 
         return new Promise((resolve, reject) => {

@@ -1,3 +1,6 @@
+postman: 
+  meta_data:
+    proxies: system
 download:
   cache: true
   image:

@@ -1,4 +1,4 @@
-# 代理地址,http或socks5
+# 代理地址,http或socks5,JM代理在JM.yaml
 proxy: ""
 # pixiv的refreshToken
 refreshToken: ""
