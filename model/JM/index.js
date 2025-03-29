@@ -43,16 +43,16 @@ export const check = async function check() {
         }
     }
     try {
-        await execPromise('python', ['-m', 'pip', 'show', 'PyPDF2', '-U', '--break-system-packages'])
-        Logger.info('PyPDF2 已安装')
+        await execPromise('python', ['-m', 'pip', 'show', 'pymupdf'])
+        Logger.info('pymupdf 已安装')
     } catch {
-        Logger.warn('PyPDF2 未安装，正在安装...')
+        Logger.warn('pymupdf 未安装，正在安装...')
         try {
-            await execPromise('python', ['-m', 'pip', 'install', 'Py2PDF', '--upgrade'])
-            Logger.info('Py2PDF 安装成功')
+            await execPromise('python', ['-m', 'pip', 'install', 'pymupdf','-U', '--break-system-packages'])
+            Logger.info('pymupdf 安装成功')
         } catch (installErr) {
-            Logger.error('安装 Py2PDF 失败:', installErr)
-            throw new Error('安装 Py2PDF 失败')
+            Logger.error('安装 pymupdf 失败:', installErr)
+            throw new Error('安装 pymupdf 失败')
         }
     }
 }
