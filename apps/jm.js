@@ -1,4 +1,24 @@
 import { JM } from '#model'
+import { Express } from '#model'
+import { Path } from '#components'
+import path from 'path'
+import { randomUUID } from 'crypto'
+import { Config } from '#components'
+let keys = {}
+Express.router.use('/jm/:key', async (req, res) => {
+    let key = keys[req.params.key]
+    if (!key) {
+        res.status(404).send('滚出去')
+        return
+    }
+    const pdfDir = path.join(Path.PluginPath, 'resources', 'JM', 'pdf')
+    let _path = await JM.find(pdfDir, key.name, key.encrypted)
+    if (_path) {
+        res.download(_path)
+    } else {
+        res.status(404).send('滚出去')
+    }
+})
 export class JMComicPlugin extends plugin {
     constructor() {
         super({
@@ -20,9 +40,9 @@ export class JMComicPlugin extends plugin {
         else e.reply(`ID: ${id}下载失败！,详情请查看日志`)
     }
     async pdf(e) {
+        let cfg = Config.getConfig('jm')
         const id = e.msg.match(/\d+/)[0]
         if (!JM.find(id)) await e.reply(`正在下载PDF ${id}...`)
-        else await e.reply(`正在发送PDF...`)
         let res = await JM.getPdf(id)
         if (!JM.find(id) && res) {
             await e.reply(`ID: ${id}下载完成！`)
@@ -30,13 +50,33 @@ export class JMComicPlugin extends plugin {
             await e.reply(`ID: ${id}下载失败！,详情请查看日志`)
         } else {
             await e.reply('开始发送PDF')
-            let pdf = await JM.encryptPDF(id)
+            let pdf = await JM.encrypt(id)
             if (pdf) {
                 await e.reply('发送PDF中')
-                await e.reply(segment.file(pdf))
+                // let reply = await e.reply(segment.file(pdf))
+                let reply = false
+                if (!reply) {
+                    if (cfg.sendAsLink) {
+                        let ip = cfg.host !== ""? cfg.host : "127.0.0.1"
+                        let pass = randomUUID().split('-')[0]
+                        await e.reply([
+                            '发送PDF失败,转为http链接',
+                            `${
+                                e.bot.adapter?.name == 'QQBot'
+                                    ? `http://${ip}:${Bot.server.address().port}/pixiv/jm/`.toUpperCase() + pass
+                                    : `http://${ip}:${Bot.server.address().port}/pixiv/jm/${pass}`
+                            }`,
+                        ])
+                        keys[pass] = {
+                            name: id,
+                            encrypted: true,
+                        }
+                    } else {
+                        await e.reply('PDF发送失败')
+                    }
+                }
             } else {
-                await e.reply('发送PDF失败,尝试转为http链接...')
-                
+                await e.reply('pdf加密失败')
             }
         }
     }

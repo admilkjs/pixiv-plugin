@@ -2,3 +2,7 @@
 maxSize: 100
 # http/s代理地址
 proxy: ""
+# 发送失败是否转为http链接发送
+sendAsLink: false
+# 本机公网地址 or 域名
+host: ""

@@ -69,7 +69,7 @@ class ComicDownloader {
         let dir_rule = Cfg_yaml.get('dir_rule')
         let plugins = Cfg_yaml.get('plugins')
         let postman = Cfg_yaml.get('postman')
-        cfg.proxy !== ""? postman.meta_data.proxies = cfg.proxy : postman.meta_data.proxies = "system"
+        cfg.proxy !== '' ? (postman.meta_data.proxies = cfg.proxy) : (postman.meta_data.proxies = 'system')
         plugins.after_photo[0].kwargs.pdf_dir = pdfDir
         dir_rule.base_dir = comicDir
         Cfg_yaml.set('dir_rule', dir_rule)
@@ -91,8 +91,8 @@ class ComicDownloader {
         })
     }
 
-    static async findPdfFile(pdfDir, comicId) {
-        const pdfPath = path.join(pdfDir, `${comicId}.pdf`)
+    static async findPdfFile(pdfDir, comicId, encrypted = false) {
+        const pdfPath = path.join(pdfDir, `${encrypted ? `${comicId}_encrypted` : `${comicId}`}.pdf`)
         try {
             await fs.stat(pdfPath)
             return pdfPath
@@ -205,4 +205,4 @@ const JM = {
     encrypt: ComicDownloader.encryptPDF,
     getEncrypted: ComicDownloader.getencryptedPdf,
 }
-export { JM }
+export default JM
