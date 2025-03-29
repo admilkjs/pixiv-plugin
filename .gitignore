@@ -137,5 +137,4 @@ dist
 .pnp.*
 novel.py
 package-lock.json
-model/express/init.js
 resources/JM/*

@@ -35,7 +35,8 @@ export class JMComicPlugin extends plugin {
                 await e.reply('发送PDF中')
                 await e.reply(segment.file(pdf))
             } else {
-                await e.reply('发送PDF失败,尝试转为http链接')
+                await e.reply('发送PDF失败,尝试转为http链接...')
+                
             }
         }
     }

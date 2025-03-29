@@ -10,7 +10,7 @@ const coloredDashes = Array.from({ length: 23 }, () => {
   const randomColor = colors[Math.floor(Math.random() * colors.length)];
   return chalk[randomColor]("*");
 }).join("");
-
+import Express from "./model/express/init.js";
 const startTime = Date.now();
 const apps = {};
 
