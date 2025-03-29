@@ -1,16 +1,13 @@
-postman: 
-  meta_data:
-    proxies: system
+# postman:
+#   meta_data:
+#     proxies: system
 download:
   cache: true
-  image:
-    decode: true
-    suffix: .jpg
 dir_rule:
-  base_dir: null
+  base_dir: 666
 
 plugins:
   after_photo:
     - plugin: img2pdf
       kwargs:
-        pdf_dir: null
+        pdf_dir: 666

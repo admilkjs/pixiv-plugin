@@ -68,13 +68,13 @@ class ComicDownloader {
 
         let dir_rule = Cfg_yaml.get('dir_rule')
         let plugins = Cfg_yaml.get('plugins')
-        let postman = Cfg_yaml.get('postman')
-        cfg.proxy !== '' ? (postman.meta_data.proxies = cfg.proxy) : (postman.meta_data.proxies = 'system')
+        // let postman = Cfg_yaml.get('postman')
+        // cfg.proxy !== '' ? (postman.meta_data.proxies = cfg.proxy) : (postman.meta_data.proxies = 'system')
         plugins.after_photo[0].kwargs.pdf_dir = pdfDir
         dir_rule.base_dir = comicDir
         Cfg_yaml.set('dir_rule', dir_rule)
         Cfg_yaml.set('plugins', plugins)
-        Cfg_yaml.set('postman', postman)
+        // Cfg_yaml.set('postman', postman)
         Cfg_yaml.save()
 
         return new Promise((resolve, reject) => {
@@ -158,14 +158,20 @@ class ComicDownloader {
         const pdfDir = path.join(Configs.COMIC_BASE_DIR, 'pdf')
         const originalPdfPath = path.join(pdfDir, `${comicId}.pdf`)
         const encryptedPdfPath = path.join(pdfDir, `${comicId}_encrypted.pdf`)
+        const password = comicId.toString()
+        const pythonScriptPath = path.join(Path.PluginPath, 'model', 'JM', 'encrypt.py')
         try {
             await fs.stat(encryptedPdfPath)
             return encryptedPdfPath
         } catch {}
-        const password = comicId.toString()
-        const pythonScriptPath = path.join(Path.PluginPath, 'model', 'JM', 'encrypt.py')
+
         try {
             await fs.access(originalPdfPath)
+        } catch {
+            return null
+        }
+
+        try {
             const execPromise = promisify(execFile)
             const { stdout, stderr } = await execPromise('python', [
                 pythonScriptPath,
@@ -176,8 +182,10 @@ class ComicDownloader {
             if (stderr) {
                 return null
             }
+            Logger.info(`加密成功: ${encryptedPdfPath}`)
             return encryptedPdfPath
-        } catch {
+        } catch (err) {
+            Logger.error(`执行 Python 脚本时出错: ${err.message}`)
             return null
         }
     }

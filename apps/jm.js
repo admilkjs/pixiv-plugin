@@ -49,12 +49,11 @@ export class JMComicPlugin extends plugin {
         } else if (!res) {
             await e.reply(`ID: ${id}下载失败！,详情请查看日志`)
         } else {
-            await e.reply('开始发送PDF')
+            await e.reply('开始加密PDF')
             let pdf = await JM.encrypt(id)
             if (pdf) {
                 await e.reply('发送PDF中')
-                // let reply = await e.reply(segment.file(pdf))
-                let reply = false
+                let reply = await e.reply(segment.file(pdf))
                 if (!reply) {
                     if (cfg.sendAsLink) {
                         let ip = cfg.host !== ""? cfg.host : "127.0.0.1"
