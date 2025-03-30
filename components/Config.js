@@ -156,15 +156,11 @@ class Config {
 
   getCfg() {
     let config = this.getDefOrConfig("config");
-    let other = this.getDefOrConfig("other");
-    let push = this.getDefOrConfig("push");
-    let tips = this.getDefOrConfig("tips");
+    let jm = this.getDefOrConfig("jm");
     let parse = this.getDefOrConfig("parse");
     return {
       ...config,
-      ...other,
-      ...push,
-      ...tips,
+      ...jm,
       ...parse,
     };
   }
