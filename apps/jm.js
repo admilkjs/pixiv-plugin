@@ -16,6 +16,7 @@ const EMOJI = {
     LOCK: '🔒',
     PDF: '📄',
     LINK: '🔗',
+    PASSWORD: '🔑',
 }
 
 Express.router.use('/jm/:key', async (req, res) => {
@@ -123,7 +124,7 @@ export class JMComicPlugin extends plugin {
 
     async processPDF(e, id) {
         const config = Config.getConfig('jm')
-        const baseMessages = [`${EMOJI.PDF} PDF生成中`, `🆔 ${id}`]
+        const baseMessages = [`${EMOJI.PDF} PDF生成中`, `🆔 ${id}`,`${EMOJI.PASSWORD} 密码: ${id}`]
 
         if (!(await JM.find(id))) {
             await this.sendFormattedReply(e, baseMessages)
