@@ -7,7 +7,7 @@ class Express {
     }
 
     init() {
-        let cfg = Config.getYaml('jm')
+        let cfg = Config.getYaml('config', 'jm')
         if (!isTRSS) {
             Bot.express = express()
                 .use(express.urlencoded({ extended: false }))
