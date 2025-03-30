@@ -253,15 +253,15 @@ export class JMComicPlugin extends plugin {
             await e.reply(`${EMOJI.PDF} PDF生成完成\n${EMOJI.LOCK} 正在发送PDF...`)
             let res
             if (this.e.isGroup) {
-                if (this.e.group.sendFile) res = await this.e.group.sendFile(filePath)
-                else res = await this.e.group.fs.upload(filePath)
+                if (this.e.group.sendFile) res = await this.e.group.sendFile(pdfPath)
+                else res = await this.e.group.fs.upload(pdfPath)
             } else {
-                res = await this.e.friend.sendFile(filePath)
+                res = await this.e.friend.sendFile(pdfPath)
             }
-            if (!res) throw '发送失败'
-            else return
+            if (!res) throw res
+            return
         } catch (error) {
-            Logger.warn(`[JM] 直接发送PDF失败: ${id}`)
+            Logger.warn(`[JM] 直接发送PDF失败: ${id}`,error)
         }
 
         if (config.sendAsLink) {
