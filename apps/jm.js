@@ -5,7 +5,10 @@ import { Logger } from '#utils'
 import path from 'path'
 import { randomUUID } from 'crypto'
 import { Config } from '#components'
-
+if (!segment.file)
+    segment.file = function file(file, name) {
+        return { type: 'file', file, name }
+    }
 const TASK_STATUS = new Map()
 const ACCESS_KEYS = {}
 const EMOJI = {
