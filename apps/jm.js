@@ -128,7 +128,7 @@ export class JMComicPlugin extends plugin {
         if (e.bot?.adapter?.name) new_e.bot = { adapter: { name: e.bot.adapter.name } }
         else new_e.bot = { adapter: { name: 'ICQQ' } }
         try {
-            bot.em('message', { ...new_e })
+            bot.emit('message', { ...new_e })
         } catch {
             loader.deal({ ...new_e })
         }
