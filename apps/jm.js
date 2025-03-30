@@ -151,7 +151,7 @@ export class JMComicPlugin extends plugin {
         if (config.sendAsLink) {
             await this.sendFallbackLink(e, id, config)
         } else {
-            await e.reply(`${EMOJI.ERROR} 发送LINK失败, Key: 0x${randomUUID().slice(0, 4)}`)
+            await e.reply(`${EMOJI.ERROR} 发送PDF失败`)
         }
     }
 
