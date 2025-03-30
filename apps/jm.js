@@ -142,6 +142,7 @@ export class JMComicPlugin extends plugin {
 
     async deliverPDF(e, pdfPath, id, config) {
         try {
+            await e.reply(`${EMOJI.PDF} PDF生成完成\n${EMOJI.LOCK} 正在发送PDF...`)
             const reply = await e.reply(segment.file(pdfPath))
             if (reply?.message_id) return
         } catch (error) {
