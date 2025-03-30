@@ -34,11 +34,15 @@ const Configs = {
     },
 }
 let Cfg_yaml
-await fs.mkdir(DIRS.IMG, { recursive: true })
-await fs.mkdir(DIRS.PDF.UNENCRYPTED, { recursive: true })
-await fs.mkdir(DIRS.PDF.ENCRYPTED, { recursive: true })
-await fs.writeFile(DIRS.OPTION, Yaml.stringify(Configs.DEF_OPTION)).then(i=>Cfg_yaml = new YamlReader(`${Configs.COMIC_BASE_DIR}/option.yml`, true))
-
+async function init() {
+    await fs.mkdir(DIRS.IMG, { recursive: true })
+    await fs.mkdir(DIRS.PDF.UNENCRYPTED, { recursive: true })
+    await fs.mkdir(DIRS.PDF.ENCRYPTED, { recursive: true })
+    await fs
+        .writeFile(DIRS.OPTION, Yaml.stringify(Configs.DEF_OPTION))
+        .then((i) => (Cfg_yaml = new YamlReader(`${Configs.COMIC_BASE_DIR}/option.yml`, true)))
+}
+await init()
 class Comic {
     async downloadComic(comicId) {
         const comicDir = path.join(DIRS.IMG, comicId.toString())
@@ -175,6 +179,7 @@ class Comic {
     }
 
     async encryptPDF(comicId) {
+        await init()
         const sourcePath = path.join(DIRS.PDF.UNENCRYPTED, `${comicId}.pdf`)
         const targetPath = path.join(DIRS.PDF.ENCRYPTED, `${comicId}_encrypted.pdf`)
 
