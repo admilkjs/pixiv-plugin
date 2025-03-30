@@ -28,8 +28,7 @@ Express.router.use('/jm/:key', async (req, res) => {
     }
 
     try {
-        const pdfDir = path.join(Path.PluginPath, 'resources', 'JM', 'pdf')
-        const filePath = await JM.find(pdfDir, credential.name, credential.encrypted)
+        const filePath = await JM.find(credential.name, credential.encrypted)
         filePath ? res.download(filePath) : res.status(404).send(`${EMOJI.ERROR} 资源不存在`)
     } catch (error) {
         Logger.error(`[JM] 文件服务异常: ${error}`)
