@@ -6,7 +6,7 @@ import YamlReader from '../../components/YamlReader.js'
 import Config from '../../components/Config.js'
 import Logger from '../utils/Logger.js'
 import { promisify } from 'util'
-
+import Yaml from 'yaml'
 const cfg = Config.getConfig('jm')
 const BASE_DIR = path.join(Path.PluginPath, 'resources', 'JM')
 const DIRS = {
@@ -15,10 +15,16 @@ const DIRS = {
         UNENCRYPTED: path.join(BASE_DIR, 'pdf', 'unencrypted'),
         ENCRYPTED: path.join(BASE_DIR, 'pdf', 'encrypted'),
     },
+    OPTION: path.join(BASE_DIR, 'option.yml'),
 }
 
 const Configs = {
     COMIC_BASE_DIR: BASE_DIR,
+    DEF_OPTION: {
+        download: { cache: true, image: { decode: true }, threading: { image: 10, photo: 2 } },
+        dir_rule: { base_dir: 666 },
+        plugins: { after_album: [{ plugin: 'img2pdf', kwargs: { pdf_dir: 666, filename_rule: 'Aid' } }] },
+    },
     IMAGE_SETTINGS: {
         maxPerMessage: 60,
         supportedFormats: ['.jpg', '.jpeg', '.png', '.webp'],
@@ -27,29 +33,29 @@ const Configs = {
         maxSizeWarning: cfg.maxSize * 1024 * 1024,
     },
 }
-
-let Cfg_yaml = new YamlReader(`${Configs.COMIC_BASE_DIR}/option.yml`, true)
-
+let Cfg_yaml = null
 // 初始化目录结构
 async function initDirs() {
+    await fs.writeFile(DIRS.OPTION, Yaml.stringify(Configs.DEF_OPTION))
+    if (!Cfg_yaml) Cfg_yaml = new YamlReader(`${Configs.COMIC_BASE_DIR}/option.yml`, true)
     await fs.mkdir(DIRS.IMG, { recursive: true })
     await fs.mkdir(DIRS.PDF.UNENCRYPTED, { recursive: true })
     await fs.mkdir(DIRS.PDF.ENCRYPTED, { recursive: true })
 }
-
+await initDirs()
 class Comic {
     async downloadComic(comicId) {
-        await initDirs()
         const comicDir = path.join(DIRS.IMG, comicId.toString())
-
         let dir_rule = Cfg_yaml.get('dir_rule')
         let plugins = Cfg_yaml.get('plugins')
-        plugins.after_photo[0].kwargs.pdf_dir = DIRS.PDF.UNENCRYPTED
+        let download = Cfg_yaml.get('download')
+        download = cfg.download
+        plugins.after_album[0].kwargs.pdf_dir = DIRS.PDF.UNENCRYPTED
         dir_rule.base_dir = comicDir
         Cfg_yaml.set('dir_rule', dir_rule)
         Cfg_yaml.set('plugins', plugins)
+        Cfg_yaml.set('download', download)
         Cfg_yaml.save()
-
         return new Promise((resolve, reject) => {
             const child = spawn('jmcomic', [comicId.toString(), `--option=${Configs.COMIC_BASE_DIR}/option.yml`])
 
@@ -173,7 +179,6 @@ class Comic {
     }
 
     async encryptPDF(comicId) {
-        await initDirs()
         const sourcePath = path.join(DIRS.PDF.UNENCRYPTED, `${comicId}.pdf`)
         const targetPath = path.join(DIRS.PDF.ENCRYPTED, `${comicId}_encrypted.pdf`)
 

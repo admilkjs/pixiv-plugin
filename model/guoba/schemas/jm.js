@@ -54,5 +54,33 @@ export default [
       label: '发送后删除文件',
       bottomHelpMessage: '发送PDF后是否删除本地图片文件',
       component: 'Switch'
+    },
+    {
+      field: "jm.download.image.decode",
+      label: "是否解码为原图",
+      bottomHelpMessage: "是否解码为原图",
+      component: "Switch"
+    },
+    {
+      field: "jm.download.threading.image",
+      label: "同时下载图片数量",
+      bottomHelpMessage: "同时下载图片数量,最大50",
+      component: "InputNumber",
+      componentProps: {
+        min: 1,
+        max: 50,
+        placeholder: "请输入同时下载的图片数量"
+      }
+    },
+    {
+      field: "jm.download.threading.photo",
+      label: "同时下载章节数",
+      bottomHelpMessage: "同时下载的章节数,建议填写为cpu线程数一半或更小",
+      component: "InputNumber",
+      componentProps: {
+        min: 1,
+        max: 100,
+        placeholder: "请输入同时下载的章节数"
+      }
     }
   ]

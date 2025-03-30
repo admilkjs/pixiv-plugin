@@ -10,3 +10,17 @@ time: 5
 host: ""
 # 在发送PDF后是否删除本地图片文件
 delete: false
+
+# 本子下载相关
+download:
+  cache: true # 这个别改
+  image:
+    decode: true # 是否解码原图 保持true即为下载原图
+  threading:
+    # image: 同时下载的图片数，默认是30张图
+    # 数值大，下得快，配置要求高，对禁漫压力大
+    # 数值小，下得慢，配置要求低，对禁漫压力小
+    # PS: 禁漫网页一次最多请求50张图
+    image: 10
+    # photo: 同时下载的章节数，不配置默认是cpu的线程数。例如8核16线程的cpu → 16.
+    photo: 2
