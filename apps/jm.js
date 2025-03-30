@@ -29,6 +29,7 @@ export class JMComicPlugin extends plugin {
             rule: [
                 { reg: /^[#/]?jmd\s*\d+$/i, fnc: 'download' },
                 { reg: /^[#/]?jm\s*\d+$/i, fnc: 'pdf' },
+                { reg: /^[#/]?清理jm$/i, fnc: 'clean' },
             ],
         })
     }
@@ -81,6 +82,16 @@ export class JMComicPlugin extends plugin {
             } else {
                 await e.reply('pdf加密失败')
             }
+        }
+    }
+    async clean(e) {
+        await e.reply('正在清理 JM 缓存，请稍候...')
+        try {
+            const { deletedCount, sizeMB } = await JM.clean()
+            await e.reply(`清理完成！\n删除文件数: ${deletedCount}\n释放空间: ${sizeMB} MB`)
+        } catch (err) {
+            await e.reply('清理失败，请查看日志！')
+            logger.error('清理 JM 缓存失败:', err)
         }
     }
 }
