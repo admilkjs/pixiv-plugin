@@ -142,7 +142,7 @@ export class JMComicPlugin extends plugin {
         const taskKey = Number(id)
 
         if (await this.checkExistingTask(e, taskKey)) {
-            if (TASK_STATUS.get(taskKey).groupId === e.group_id) {
+            if (TASK_STATUS.get(taskKey).id === (e.isGroup? e.group_id:e.user_id)) {
                 return
             }
             while (TASK_STATUS.has(taskKey)) {
@@ -153,7 +153,7 @@ export class JMComicPlugin extends plugin {
         }
 
         TASK_STATUS.set(taskKey, {
-            groupId: e.group_id,
+            id: (e.isGroup? e.group_id:e.user_id),
             timestamp: Date.now(),
         })
 
@@ -219,7 +219,7 @@ export class JMComicPlugin extends plugin {
         const messages = [
             `${EMOJI.LOCK} 任务冲突`,
             `🆔 ${taskKey}`,
-            task.groupId === e.group_id ? '⏳ 请等待本群相同任务处理完成' : '🚦 加入全局处理队列...请等待',
+            task.id === (e.isGroup? e.group_id:e.user_id) ? '⏳ 请等待本群相同任务处理完成' : '🚦 加入全局处理队列...请等待',
         ]
 
         await e.reply(messages.join('\n'))
