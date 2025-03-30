@@ -132,7 +132,7 @@ export class JMComicPlugin extends plugin {
         }
 
         try {
-            const pdfPath = (await JM.find(id)) || (await JM.encrypt(id))
+            const pdfPath = (await JM.encrypt(id))
             await this.deliverPDF(e, pdfPath, id, config)
         } catch (error) {
             Logger.error(`[JM] 生成失败: ${error}`)

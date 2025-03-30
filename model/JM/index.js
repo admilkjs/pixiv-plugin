@@ -35,7 +35,7 @@ export const check = async function check() {
     } catch {
         Logger.warn('jmcomic 未安装，正在安装...')
         try {
-            await execPromise('python', ['-m', 'pip', 'install', 'jmcomic', '--U', '--break-system-packages'])
+            await execPromise('python', ['-m', 'pip', 'install', 'jmcomic', '-U', '--break-system-packages'])
             Logger.info('jmcomic 安装成功')
         } catch (installErr) {
             Logger.error('安装 jmcomic 失败:', installErr)
