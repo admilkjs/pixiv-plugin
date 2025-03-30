@@ -246,7 +246,7 @@ export class JMComicPlugin extends plugin {
             await this.deliverPDF(e, pdfPath, id, config)
         } catch (error) {
             Logger.error(`[JM] 生成失败: ${error}`)
-            await e.reply([`${EMOJI.ERROR} 生成中断`, '🔧 请重试或检查存储'].join('\n'))
+            await e.reply([`${EMOJI.ERROR} 生成中断`, '🔧 请重试或检查这本本子是否存在'].join('\n'))
         }
     }
 
