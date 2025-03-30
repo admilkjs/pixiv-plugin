@@ -90,7 +90,7 @@ export class JMComicPlugin extends plugin {
         } finally {
             TASK_STATUS.delete(taskKey)
             const { deletedCount, sizeMB } = await JM.clean(['img'])
-            if (!(deletedCount == 0 ||sizeMB < 1))
+            if (deletedCount !== 0)
             await this.sendFormattedReply(e, [
                 `${EMOJI.SUCCESS} 无用Img清理完成`,
                 `🗑️ ${deletedCount}个文件`,
