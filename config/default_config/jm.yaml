@@ -8,6 +8,8 @@ sendAsLink: false
 time: 5
 # 本机公网地址 or 域名
 host: ""
+# 如果为Miao-Yunzai那么填写端口或保持不动
+port: 2536
 # 在发送PDF后是否删除本地图片文件
 delete: false
 
