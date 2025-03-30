@@ -38,9 +38,13 @@ async function init() {
     await fs.mkdir(DIRS.IMG, { recursive: true })
     await fs.mkdir(DIRS.PDF.UNENCRYPTED, { recursive: true })
     await fs.mkdir(DIRS.PDF.ENCRYPTED, { recursive: true })
-    await fs
-        .writeFile(DIRS.OPTION, Yaml.stringify(Configs.DEF_OPTION))
-        .then((i) => (Cfg_yaml = new YamlReader(`${Configs.COMIC_BASE_DIR}/option.yml`, true)))
+    try {
+        await fs.stat(DIRS.OPTION)
+    } catch {
+        await fs.writeFile(DIRS.OPTION, Yaml.stringify(Configs.DEF_OPTION))
+    } finally {
+        Cfg_yaml = new YamlReader(`${Configs.COMIC_BASE_DIR}/option.yml`, true)
+    }
 }
 await init()
 class Comic {
