@@ -5,10 +5,6 @@ import { Logger } from '#utils'
 import path from 'path'
 import { randomUUID } from 'crypto'
 import { Config } from '#components'
-if (!segment.file)
-    segment.file = function file(file, name) {
-        return { type: 'file', file, name }
-    }
 const TASK_STATUS = new Map()
 const ACCESS_KEYS = {}
 const EMOJI = {
@@ -255,8 +251,15 @@ export class JMComicPlugin extends plugin {
     async deliverPDF(e, pdfPath, id, config) {
         try {
             await e.reply(`${EMOJI.PDF} PDF生成完成\n${EMOJI.LOCK} 正在发送PDF...`)
-            const reply = await e.reply(segment.file(pdfPath))
-            if (reply?.message_id) return
+            let res
+            if (this.e.isGroup) {
+                if (this.e.group.sendFile) res = await this.e.group.sendFile(filePath)
+                else res = await this.e.group.fs.upload(filePath)
+            } else {
+                res = await this.e.friend.sendFile(filePath)
+            }
+            if (!res) throw '发送失败'
+            else return
         } catch (error) {
             Logger.warn(`[JM] 直接发送PDF失败: ${id}`)
         }
