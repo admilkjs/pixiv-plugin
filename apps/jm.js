@@ -93,9 +93,6 @@ export class JMComicPlugin extends plugin {
             block: e.block,
             font: e.font,
             from_id: at,
-            group: e.group,
-            group_id: e.group_id,
-            group_name: e.group_name,
             isGroup: e.isGroup,
             isMaster: false,
             // member: e.group.pickMember(at),
@@ -126,6 +123,13 @@ export class JMComicPlugin extends plugin {
         if (loader.groupCD) delete loader.groupCD[e.group_id]
         if (e.bot?.adapter?.name) new_e.bot = { adapter: { name: e.bot.adapter.name } }
         else new_e.bot = { adapter: { name: 'ICQQ' } }
+        if (e.isGroup) {
+            new_e.group = e.group
+            new_e.group_id = e.group_id
+            new_e.group_name = e.group_name
+        } else {
+            new_e.friend = e.friend
+        }
         try {
             bot.emit('message', { ...new_e })
         } catch {
@@ -253,11 +257,11 @@ export class JMComicPlugin extends plugin {
             await e.reply(`${EMOJI.PDF} PDF生成完成\n${EMOJI.LOCK} 正在发送PDF...`)
             let res
             if (!segment.file)
-                if (this.e.isGroup) {
-                    if (this.e.group.sendFile) res = await this.e.group.sendFile(pdfPath)
-                    else res = await this.e.group.fs.upload(pdfPath)
+                if (e.isGroup) {
+                    if (e.group.sendFile) res = await e.group.sendFile(pdfPath)
+                    else res = await e.group.fs.upload(pdfPath)
                 } else {
-                    res = await this.e.friend.sendFile(pdfPath)
+                    res = await e.friend.sendFile(pdfPath)
                 }
             else res = await e.reply(segment.file(pdfPath))
             if (!res) throw res
