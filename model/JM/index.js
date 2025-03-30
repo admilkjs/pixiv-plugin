@@ -33,11 +33,11 @@ const Configs = {
         maxSizeWarning: cfg.maxSize * 1024 * 1024,
     },
 }
-await fs.writeFile(DIRS.OPTION, Yaml.stringify(Configs.DEF_OPTION))
-let Cfg_yaml = new YamlReader(`${Configs.COMIC_BASE_DIR}/option.yml`, true)
+let Cfg_yaml
 await fs.mkdir(DIRS.IMG, { recursive: true })
 await fs.mkdir(DIRS.PDF.UNENCRYPTED, { recursive: true })
 await fs.mkdir(DIRS.PDF.ENCRYPTED, { recursive: true })
+await fs.writeFile(DIRS.OPTION, Yaml.stringify(Configs.DEF_OPTION)).then(i=>Cfg_yaml = new YamlReader(`${Configs.COMIC_BASE_DIR}/option.yml`, true))
 
 class Comic {
     async downloadComic(comicId) {
