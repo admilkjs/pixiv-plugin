@@ -71,7 +71,7 @@ export class JMComicPlugin extends plugin {
     }
     async help(e) {
         const message = [
-            `------JM帮助------`,
+            `------------JM帮助------------`,
             `${EMOJI.DOWNLOAD} #jmd id 下载JM本子到本地`,
             `${EMOJI.PDF} #jm id 发送对应PDF`,
             `${EMOJI.PDF} #jm随机 随机发送一个本子`,
