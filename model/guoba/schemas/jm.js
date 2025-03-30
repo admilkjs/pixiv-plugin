@@ -14,15 +14,15 @@ export default [
             placeholder: '请输入最大文件大小',
         },
     },
-    {
-        field: 'jm.proxy',
-        label: '网络代理地址',
-        bottomHelpMessage: 'http/s代理地址（例如：http://127.0.0.1:7890）',
-        component: 'Input',
-        componentProps: {
-            placeholder: '请输入代理地址',
-        },
-    },
+    // {
+    //     field: 'jm.proxy',
+    //     label: '网络代理地址',
+    //     bottomHelpMessage: 'http/s代理地址（例如：http://127.0.0.1:7890）',
+    //     component: 'Input',
+    //     componentProps: {
+    //         placeholder: '请输入代理地址',
+    //     },
+    // },
     {
         field: 'jm.sendAsLink',
         label: '失败转链接发送',

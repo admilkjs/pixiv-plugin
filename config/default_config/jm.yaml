@@ -1,7 +1,7 @@
 # PDF最大大小 单位 MB
 maxSize: 100
-# http/s代理地址
-proxy: ""
+# # http/s代理地址
+# proxy: ""
 # 发送失败是否转为http链接发送
 sendAsLink: false
 # 链接过期时间 单位分钟
