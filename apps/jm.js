@@ -47,7 +47,9 @@ export class JMComicPlugin extends plugin {
             rule: [
                 { reg: /^[#/]?jmd\s*\d+$/i, fnc: 'download' },
                 { reg: /^[#/]?jm\s*\d+$/i, fnc: 'pdf' },
-                { reg: /^[#/]?清理jm\s*(\S*)/i, fnc: 'clean' }, // 修改正则匹配
+                { reg: /^[#/]?清理jm\s*(\S*)/i, fnc: 'clean' },
+                { reg: /^[#/]?jm随机(本子)?/i, fnc: 'random' },
+                { reg: /^[#/]?jm(帮助|help|说明|功能)$/i, fnc: 'help' },
             ],
         })
     }
@@ -67,7 +69,72 @@ export class JMComicPlugin extends plugin {
             await e.reply(`${EMOJI.ERROR} 下载服务不可用`)
         }
     }
-
+    async help(e) {
+        const message = [
+            `------JM帮助------`,
+            `${EMOJI.DOWNLOAD} #jmd id 下载JM本子到本地`,
+            `${EMOJI.PDF} #jm id 发送对应PDF`,
+            `${EMOJI.PDF} #jm随机 随机发送一个本子`,
+            `${EMOJI.CLEAN} #清理jm全部 清理全部内容`,
+            `${EMOJI.CLEAN} #清理jm未加密 清理未加密的PDF`,
+            `${EMOJI.CLEAN} #清理jm 加密 清理加密的PDF`,
+        ]
+        await this.sendFormattedReply(e, message)
+        return true
+    }
+    async random(e) {
+        const at = e.user_id
+        //随机范围1-474493
+        let randomNum = Math.floor(Math.random() * (474493 - 1 + 1)) + 1
+        const message = [{ type: 'text', text: `#jm ${randomNum}` }]
+        const msg = `#jm ${randomNum}`
+        const loader = (await import('../../../lib/plugins/loader.js')).default
+        const new_e = {
+            atall: e.atall,
+            atme: e.atme,
+            block: e.block,
+            font: e.font,
+            from_id: at,
+            group: e.group,
+            group_id: e.group_id,
+            group_name: e.group_name,
+            isGroup: e.isGroup,
+            isMaster: false,
+            // member: e.group.pickMember(at),
+            message: message,
+            message_id: e.message_id,
+            message_type: e.message_type,
+            msg_id: e.msg_id,
+            nt: e.nt,
+            original_msg: msg,
+            post_type: e.post_type,
+            rand: e.rand,
+            raw_message: msg,
+            recall: e.reacall,
+            reply: e.reply,
+            self_id: e.self_id,
+            sender: {},
+            seq: e.seq,
+            sub_type: e.sub_type,
+            time: e.time,
+            user_id: at,
+        }
+        new_e.sender = new_e.member?.info || {
+            card: at,
+            nickname: at,
+            user_id: at,
+        }
+        if (loader.groupGlobalCD) delete loader.groupGlobalCD[e.group_id]
+        if (loader.groupCD) delete loader.groupCD[e.group_id]
+        if (e.bot?.adapter?.name) new_e.bot = { adapter: { name: e.bot.adapter.name } }
+        else new_e.bot = { adapter: { name: 'ICQQ' } }
+        try {
+            bot.em('message', { ...new_e })
+        } catch {
+            loader.deal({ ...new_e })
+        }
+        return true
+    }
     async pdf(e) {
         const id = this.extractId(e.msg)
         const taskKey = Number(id)
@@ -175,6 +242,7 @@ export class JMComicPlugin extends plugin {
 
         try {
             const pdfPath = await JM.encrypt(id)
+            if (!pdfPath) throw new Error('PDF加密失败')
             await this.deliverPDF(e, pdfPath, id, config)
         } catch (error) {
             Logger.error(`[JM] 生成失败: ${error}`)

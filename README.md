@@ -37,8 +37,9 @@ pnpm install --filter=pixiv-plugin
     - 解析pixiv系列插画
 
 ### JM
-
-    - JM搜索(#JM+ID)
+    - JM本子(#JM+ID)
+    - JM随机本子(#jm随机)
+    - 其余功能发送`#jm帮助`查看
 
 ### 配置
 
