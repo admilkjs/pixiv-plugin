@@ -6,10 +6,19 @@ import YamlReader from '../../components/YamlReader.js'
 import Config from '../../components/Config.js'
 import Logger from '../utils/Logger.js'
 import { promisify } from 'util'
-let cfg = Config.getConfig('jm')
-const PDF_PATH = path.join(Path.PluginPath, 'resources', 'JM')
+
+const cfg = Config.getConfig('jm')
+const BASE_DIR = path.join(Path.PluginPath, 'resources', 'JM')
+const DIRS = {
+    IMG: path.join(BASE_DIR, 'img'),
+    PDF: {
+        UNENCRYPTED: path.join(BASE_DIR, 'pdf', 'unencrypted'),
+        ENCRYPTED: path.join(BASE_DIR, 'pdf', 'encrypted'),
+    },
+}
+
 const Configs = {
-    COMIC_BASE_DIR: PDF_PATH,
+    COMIC_BASE_DIR: BASE_DIR,
     IMAGE_SETTINGS: {
         maxPerMessage: 60,
         supportedFormats: ['.jpg', '.jpeg', '.png', '.webp'],
@@ -20,79 +29,48 @@ const Configs = {
 }
 
 let Cfg_yaml = new YamlReader(`${Configs.COMIC_BASE_DIR}/option.yml`, true)
-export const check = async function check() {
-    const execPromise = promisify(execFile)
-    try {
-        await execPromise('python', ['--version'])
-        Logger.info('Python 已安装')
-    } catch (err) {
-        Logger.error('Python 未安装或未添加到环境变量中，请先安装 Python')
-        throw new Error('Python 未安装')
-    }
-    try {
-        await execPromise('python', ['-m', 'pip', 'show', 'jmcomic'])
-        Logger.info('jmcomic 已安装')
-    } catch {
-        Logger.warn('jmcomic 未安装，正在安装...')
-        try {
-            await execPromise('python', ['-m', 'pip', 'install', 'jmcomic', '-U', '--break-system-packages'])
-            Logger.info('jmcomic 安装成功')
-        } catch (installErr) {
-            Logger.error('安装 jmcomic 失败:', installErr)
-            throw new Error('安装 jmcomic 失败')
-        }
-    }
-    try {
-        await execPromise('python', ['-m', 'pip', 'show', 'pymupdf'])
-        Logger.info('pymupdf 已安装')
-    } catch {
-        Logger.warn('pymupdf 未安装，正在安装...')
-        try {
-            await execPromise('python', ['-m', 'pip', 'install', 'pymupdf', '-U', '--break-system-packages'])
-            Logger.info('pymupdf 安装成功')
-        } catch (installErr) {
-            Logger.error('安装 pymupdf 失败:', installErr)
-            throw new Error('安装 pymupdf 失败')
-        }
-    }
+
+// 初始化目录结构
+async function initDirs() {
+    await fs.mkdir(DIRS.IMG, { recursive: true })
+    await fs.mkdir(DIRS.PDF.UNENCRYPTED, { recursive: true })
+    await fs.mkdir(DIRS.PDF.ENCRYPTED, { recursive: true })
 }
 
-class ComicDownloader {
-    static async downloadComic(comicId) {
-        const comicDir = path.join(Configs.COMIC_BASE_DIR, 'img', comicId.toString())
-        const pdfDir = path.join(Configs.COMIC_BASE_DIR, 'pdf')
-        await fs.mkdir(path.join(Configs.COMIC_BASE_DIR, 'img'), { recursive: true })
-        await fs.mkdir(path.join(Configs.COMIC_BASE_DIR, 'pdf'), { recursive: true })
-        await fs.mkdir(pdfDir, { recursive: true })
-        await fs.mkdir(comicDir, { recursive: true })
+class Comic {
+    async downloadComic(comicId) {
+        await initDirs()
+        const comicDir = path.join(DIRS.IMG, comicId.toString())
 
         let dir_rule = Cfg_yaml.get('dir_rule')
         let plugins = Cfg_yaml.get('plugins')
-        // let postman = Cfg_yaml.get('postman')
-        // cfg.proxy !== '' ? (postman.meta_data.proxies = cfg.proxy) : (postman.meta_data.proxies = 'system')
-        plugins.after_photo[0].kwargs.pdf_dir = pdfDir
+        plugins.after_photo[0].kwargs.pdf_dir = DIRS.PDF.UNENCRYPTED
         dir_rule.base_dir = comicDir
         Cfg_yaml.set('dir_rule', dir_rule)
         Cfg_yaml.set('plugins', plugins)
-        // Cfg_yaml.set('postman', postman)
         Cfg_yaml.save()
 
         return new Promise((resolve, reject) => {
             const child = spawn('jmcomic', [comicId.toString(), `--option=${Configs.COMIC_BASE_DIR}/option.yml`])
+
             child.on('close', async (code) => {
                 if (code === 0) {
-                    const pdfFilePath = await ComicDownloader.findPdfFile(pdfDir, comicId)
-                    resolve(pdfFilePath)
+                    const pdfPath = path.join(DIRS.PDF.UNENCRYPTED, `${comicId}.pdf`)
+                    resolve(pdfPath)
                 } else {
                     reject(new Error(`下载失败，退出码: ${code}`))
                 }
             })
-            child.on('error', (err) => reject(err))
+
+            child.on('error', reject)
         })
     }
 
-    static async findPdfFile(pdfDir, comicId, encrypted = false) {
-        const pdfPath = path.join(pdfDir, `${encrypted ? `${comicId}_encrypted` : `${comicId}`}.pdf`)
+    async findPdfFile(comicId, encrypted = false) {
+        const targetDir = encrypted ? DIRS.PDF.ENCRYPTED : DIRS.PDF.UNENCRYPTED
+        const filename = encrypted ? `${comicId}_encrypted.pdf` : `${comicId}.pdf`
+        const pdfPath = path.join(targetDir, filename)
+
         try {
             await fs.stat(pdfPath)
             return pdfPath
@@ -101,118 +79,104 @@ class ComicDownloader {
         }
     }
 
-    static async getSortedImageFiles(dir) {
-        try {
-            const files = await fs.readdir(dir)
-            return files
-                .filter((file) => Configs.IMAGE_SETTINGS.supportedFormats.includes(path.extname(file).toLowerCase()))
-                .sort((a, b) => {
-                    const numA = parseInt(a.match(/\d+/)?.[0] || 0)
-                    const numB = parseInt(b.match(/\d+/)?.[0] || 0)
-                    return numA - numB
-                })
-                .map((file) => path.join(dir, file))
-        } catch {
-            return []
+    async cleanCache(
+        options = {
+            images: false,
+            unencrypted: false,
+            encrypted: false,
         }
-    }
-    static async cleanComicCache(type = ['img', 'pdf']) {
-        const imgDir = path.join(Configs.COMIC_BASE_DIR, 'img')
-        const pdfDir = path.join(Configs.COMIC_BASE_DIR, 'pdf')
-        let deletedCount = 0,
-            totalSize = 0
-        if (type.includes('img'))
+    ) {
+        let deletedCount = 0
+        let totalSize = 0
+
+        if (options.images) {
             try {
-                const imgItems = await fs.readdir(imgDir)
-                for (const item of imgItems) {
-                    const itemPath = path.join(imgDir, item)
-                    const stat = await fs.stat(itemPath)
+                const files = await fs.readdir(DIRS.IMG)
+                for (const file of files) {
+                    const filePath = path.join(DIRS.IMG, file)
+                    const stat = await fs.stat(filePath)
                     totalSize += stat.size
-                    await fs.rm(itemPath, { recursive: true, force: true })
+                    await fs.rm(filePath, { recursive: true, force: true })
                     deletedCount++
                 }
             } catch (err) {
-                Logger.warn('清理 img 文件夹时出错:', err)
+                Logger.warn('清理图片缓存失败:', err)
             }
-        if (type.includes('pdf'))
-            try {
-                const pdfItems = await fs.readdir(pdfDir)
-                for (const item of pdfItems) {
-                    const itemPath = path.join(pdfDir, item)
-                    const stat = await fs.stat(itemPath)
-                    totalSize += stat.size
-                    await fs.rm(itemPath, { recursive: true, force: true })
-                    deletedCount++
-                }
-            } catch (err) {
-                Logger.warn('清理 pdf 文件夹时出错:', err)
-            }
+        }
+
+        if (options.unencrypted) {
+            deletedCount += await this.cleanPdfDir(DIRS.PDF.UNENCRYPTED)
+        }
+
+        if (options.encrypted) {
+            deletedCount += await this.cleanPdfDir(DIRS.PDF.ENCRYPTED)
+        }
+
         return {
             deletedCount,
             sizeMB: (totalSize / 1024 / 1024).toFixed(2),
         }
     }
-    /**
-     * 加密 PDF 文件，添加密码
-     * @param {string|number} comicId - 漫画 ID，用作密码
-     */
-    static async encryptPDF(comicId) {
-        const pdfDir = path.join(Configs.COMIC_BASE_DIR, 'pdf')
-        const originalPdfPath = path.join(pdfDir, `${comicId}.pdf`)
-        const encryptedPdfPath = path.join(pdfDir, `${comicId}_encrypted.pdf`)
-        const password = comicId.toString()
-        const pythonScriptPath = path.join(Path.PluginPath, 'model', 'JM', 'encrypt.py')
-        try {
-            await fs.stat(encryptedPdfPath)
-            return encryptedPdfPath
-        } catch {}
 
+    async cleanPdfDir(dir) {
+        let count = 0
         try {
-            await fs.access(originalPdfPath)
-        } catch {
-            return null
-        }
-
-        try {
-            const execPromise = promisify(execFile)
-            const { stdout, stderr } = await execPromise('python', [
-                pythonScriptPath,
-                originalPdfPath,
-                encryptedPdfPath,
-                password,
-            ])
-            if (stderr) {
-                return null
+            const files = await fs.readdir(dir)
+            for (const file of files) {
+                await fs.rm(path.join(dir, file))
+                count++
             }
-            Logger.info(`加密成功: ${encryptedPdfPath}`)
-            return encryptedPdfPath
         } catch (err) {
-            Logger.error(`执行 Python 脚本时出错: ${err.message}`)
+            Logger.warn(`清理PDF目录失败 [${dir}]:`, err)
+        }
+        return count
+    }
+
+    async encryptPDF(comicId) {
+        await initDirs()
+        const sourcePath = path.join(DIRS.PDF.UNENCRYPTED, `${comicId}.pdf`)
+        const targetPath = path.join(DIRS.PDF.ENCRYPTED, `${comicId}_encrypted.pdf`)
+
+        try {
+            if (await this.findPdfFile(comicId, true)) {
+                return targetPath
+            }
+
+            const pythonScript = path.join(Path.PluginPath, 'model', 'JM', 'encrypt.py')
+            const { stdout, stderr } = await promisify(execFile)('python', [
+                pythonScript,
+                sourcePath,
+                targetPath,
+                comicId.toString(),
+            ])
+
+            return stderr ? null : targetPath
+        } catch (err) {
+            Logger.error('PDF加密失败:', err)
             return null
         }
     }
-    static async getencryptedPdf(id) {
-        const encryptedPdfPath = await ComicDownloader.encryptPDF(id)
-        if (encryptedPdfPath) {
-            return encryptedPdfPath
-        } else {
-            return null
-        }
-    }
+}
+const ComicDownloader = new Comic()
+// 对外接口
+const JM = {
+    getPdf: async (id) => {
+        const pdfPath = await ComicDownloader.findPdfFile(id)
+        return pdfPath || ComicDownloader.downloadComic(id)
+    },
+
+    find: async (id, encrypted) => await ComicDownloader.findPdfFile(id, encrypted),
+
+    download: async (id) => await ComicDownloader.downloadComic(id),
+
+    clean: async (options = {}) =>
+        await ComicDownloader.cleanCache({
+            images: options.includeImages,
+            unencrypted: options.pdfType === 'unencrypted' || options.pdfType === 'all',
+            encrypted: options.pdfType === 'encrypted' || options.pdfType === 'all',
+        }),
+
+    encrypt: async (id) => await ComicDownloader.encryptPDF(id),
 }
 
-const getPdf = async (id) => {
-    const pdfDir = path.join(Configs.COMIC_BASE_DIR, 'pdf')
-    if (await ComicDownloader.findPdfFile(pdfDir, id)) return path.join(pdfDir, `${id}.pdf`)
-    const pdfFilePath = await ComicDownloader.downloadComic(id)
-    return pdfFilePath
-}
-const JM = {
-    getPdf,
-    find: ComicDownloader.findPdfFile,
-    download: ComicDownloader.downloadComic,
-    clean: ComicDownloader.cleanComicCache,
-    encrypt: ComicDownloader.encryptPDF,
-    getEncrypted: ComicDownloader.getencryptedPdf,
-}
 export default JM

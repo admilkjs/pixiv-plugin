@@ -47,7 +47,7 @@ export class JMComicPlugin extends plugin {
             rule: [
                 { reg: /^[#/]?jmd\s*\d+$/i, fnc: 'download' },
                 { reg: /^[#/]?jm\s*\d+$/i, fnc: 'pdf' },
-                { reg: /^[#/]?清理jm$/i, fnc: 'clean' },
+                { reg: /^[#/]?清理jm\s*(\S*)/i, fnc: 'clean' }, // 修改正则匹配
             ],
         })
     }
@@ -58,7 +58,10 @@ export class JMComicPlugin extends plugin {
 
         try {
             const result = await JM.download(id)
-            await e.reply(result ? `${EMOJI.SUCCESS} 下载完成\n🆔 ${id}` : `${EMOJI.ERROR} 下载失败，查看日志`,`${EMOJI.PDF} 发送#jm id以获取PDF`)
+            await e.reply(
+                result ? `${EMOJI.SUCCESS} 下载完成\n🆔 ${id}` : `${EMOJI.ERROR} 下载失败，查看日志`,
+                `${EMOJI.PDF} 发送#jm id以获取PDF`
+            )
         } catch (error) {
             Logger.error(`[JM] 下载异常: ${error}`)
             await e.reply(`${EMOJI.ERROR} 下载服务不可用`)
@@ -88,34 +91,58 @@ export class JMComicPlugin extends plugin {
         try {
             await this.processPDF(e, id)
         } finally {
+            let config = Config.getConfig('jm')
             TASK_STATUS.delete(taskKey)
-            const { deletedCount, sizeMB } = await JM.clean(['img'])
-            if (deletedCount !== 0)
-            await this.sendFormattedReply(e, [
-                `${EMOJI.SUCCESS} 无用Img清理完成`,
-                `🗑️ ${deletedCount}个文件`,
-                `💾 ${sizeMB}MB空间释放`,
-                `${EMOJI.PDF} PDF并未删除`
-            ])
+            if (config.delete) {
+                const { deletedCount, sizeMB } = await JM.clean({ includeImages: true })
+                if (deletedCount !== 0)
+                    await this.sendFormattedReply(e, [
+                        `${EMOJI.SUCCESS} 无用Img清理完成`,
+                        `🗑️ ${deletedCount}个文件`,
+                        `💾 ${sizeMB}MB空间释放`,
+                        `${EMOJI.PDF} PDF并未删除`,
+                    ])
+            }
         }
     }
 
     async clean(e) {
-        await this.sendFormattedReply(e, [`${EMOJI.CLEAN} 存储优化启动`, '🔍 扫描缓存文件...'])
+        const arg = e.msg.replace(/^[#/]清理jm\s*/i, '').trim()
+        let options = { includeImages: false, pdfType: 'none' }
+        const typeMap = {
+            未加密: { pdfType: 'unencrypted' },
+            加密: { pdfType: 'encrypted' },
+            img: { includeImages: true },
+            全部: { includeImages: true, pdfType: 'all' },
+            '': { includeImages: true, pdfType: 'all' }, // 默认行为
+        }
+
+        if (Object.keys(typeMap).includes(arg)) {
+            options = { ...typeMap[arg] }
+        } else if (arg) {
+            await e.reply(`${EMOJI.ERROR} 无效清理类型，可用选项：未加密/加密/img/全部`)
+            return
+        }
+
+        await this.sendFormattedReply(e, [
+            `${EMOJI.CLEAN} 存储优化启动`,
+            `🔍 正在扫描：${this.getCleanTypeText(arg)}...`,
+        ])
 
         try {
-            const { deletedCount, sizeMB } = await JM.clean()
-            await this.sendFormattedReply(e, [
-                `${EMOJI.SUCCESS} 清理完成`,
-                `🗑️ ${deletedCount}个文件`,
-                `💾 ${sizeMB}MB空间释放`,
-            ])
+            const { deletedCount, sizeMB } = await JM.clean(options)
+            const report = [`${EMOJI.SUCCESS} 清理完成`, `🗑️ 删除文件: ${deletedCount}个`, `💾 释放空间: ${sizeMB}MB`]
+
+            if (options.pdfType !== 'all') {
+                report.push(`📦 保留内容: ${this.getPreservedText(options)}`)
+            }
+
+            await this.sendFormattedReply(e, report)
         } catch (error) {
             Logger.error(`[JM] 清理失败: ${error}`)
             await e.reply(`${EMOJI.ERROR} 清理进程异常`)
         }
     }
-
     async checkExistingTask(e, taskKey) {
         if (!TASK_STATUS.has(taskKey)) return false
 
@@ -132,7 +159,7 @@ export class JMComicPlugin extends plugin {
 
     async processPDF(e, id) {
         const config = Config.getConfig('jm')
-        const baseMessages = [`${EMOJI.PDF} PDF生成中`, `🆔 ${id}`,`${EMOJI.PASSWORD} 密码: ${id}`]
+        const baseMessages = [`${EMOJI.PDF} PDF生成中`, `🆔 ${id}`, `${EMOJI.PASSWORD} 密码: ${id}`]
 
         if (!(await JM.find(id))) {
             await this.sendFormattedReply(e, baseMessages)
@@ -140,7 +167,7 @@ export class JMComicPlugin extends plugin {
         }
 
         try {
-            const pdfPath = (await JM.encrypt(id))
+            const pdfPath = await JM.encrypt(id)
             await this.deliverPDF(e, pdfPath, id, config)
         } catch (error) {
             Logger.error(`[JM] 生成失败: ${error}`)
@@ -209,5 +236,23 @@ export class JMComicPlugin extends plugin {
 
     extractId(message) {
         return message.match(/\d+/)[0]
+    }
+    getCleanTypeText(arg) {
+        const map = {
+            未加密: '未加密PDF',
+            加密: '加密PDF',
+            img: '临时图片',
+            全部: '所有缓存',
+            '': '默认缓存',
+        }
+        return map[arg] || '指定内容'
+    }
+
+    getPreservedText(options) {
+        const preserved = []
+        if (!options.includeImages) preserved.push('图片')
+        if (options.pdfType === 'unencrypted') preserved.push('加密PDF')
+        if (options.pdfType === 'encrypted') preserved.push('未加密PDF')
+        return preserved.join(' + ') || '无'
     }
 }
