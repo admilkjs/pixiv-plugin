@@ -84,32 +84,36 @@ class Comic {
             images: false,
             unencrypted: false,
             encrypted: false,
-        }
+        },
+        comicId = null
     ) {
         let deletedCount = 0
         let totalSize = 0
 
         if (options.images) {
+            const cleanPath = comicId ? path.join(DIRS.IMG, comicId.toString()) : DIRS.IMG
+
             try {
-                const files = await fs.readdir(DIRS.IMG)
-                for (const file of files) {
-                    const filePath = path.join(DIRS.IMG, file)
-                    const stat = await fs.stat(filePath)
-                    totalSize += stat.size
-                    await fs.rm(filePath, { recursive: true, force: true })
-                    deletedCount++
-                }
+                const { count, size } = await this.deletePath(cleanPath)
+                deletedCount += count
+                totalSize += size
             } catch (err) {
                 Logger.warn('清理图片缓存失败:', err)
             }
         }
 
+        const pdfCleanTasks = []
         if (options.unencrypted) {
-            deletedCount += await this.cleanPdfDir(DIRS.PDF.UNENCRYPTED)
+            pdfCleanTasks.push(this.cleanPdfFiles(DIRS.PDF.UNENCRYPTED, comicId))
+        }
+        if (options.encrypted) {
+            pdfCleanTasks.push(this.cleanPdfFiles(DIRS.PDF.ENCRYPTED, comicId))
         }
 
-        if (options.encrypted) {
-            deletedCount += await this.cleanPdfDir(DIRS.PDF.ENCRYPTED)
+        const pdfResults = await Promise.all(pdfCleanTasks)
+        for (const { count, size } of pdfResults) {
+            deletedCount += count
+            totalSize += size
         }
 
         return {
@@ -117,19 +121,55 @@ class Comic {
             sizeMB: (totalSize / 1024 / 1024).toFixed(2),
         }
     }
-
-    async cleanPdfDir(dir) {
+    async deletePath(targetPath) {
         let count = 0
+        let totalSize = 0
+
         try {
-            const files = await fs.readdir(dir)
-            for (const file of files) {
-                await fs.rm(path.join(dir, file))
+            const stat = await fs.stat(targetPath)
+            if (stat.isDirectory()) {
+                const files = await fs.readdir(targetPath)
+                for (const file of files) {
+                    const result = await this.deletePath(path.join(targetPath, file))
+                    count += result.count
+                    totalSize += result.size
+                }
+                await fs.rmdir(targetPath)
+            } else {
+                totalSize += stat.size
+                await fs.unlink(targetPath)
                 count++
             }
         } catch (err) {
-            Logger.warn(`清理PDF目录失败 [${dir}]:`, err)
+            if (err.code !== 'ENOENT') throw err
         }
-        return count
+
+        return { count, size: totalSize }
+    }
+    async cleanPdfFiles(pdfDir, comicId) {
+        let count = 0
+        let totalSize = 0
+
+        try {
+            if (comicId) {
+                const pdfPatterns = [`${comicId}.pdf`, `${comicId}_encrypted.pdf`]
+
+                for (const pattern of pdfPatterns) {
+                    const pdfPath = path.join(pdfDir, pattern)
+                    const { count: c, size: s } = await this.deletePath(pdfPath)
+                    count += c
+                    totalSize += s
+                }
+            } else {
+                const { count: c, size: s } = await this.deletePath(pdfDir)
+                count += c
+                totalSize += s
+            }
+        } catch (err) {
+            Logger.warn(`清理PDF失败 [${pdfDir}]:`, err)
+        }
+
+        return { count, size: totalSize }
     }
 
     async encryptPDF(comicId) {
@@ -169,12 +209,15 @@ const JM = {
 
     download: async (id) => await ComicDownloader.downloadComic(id),
 
-    clean: async (options = {}) =>
-        await ComicDownloader.cleanCache({
-            images: options.includeImages,
-            unencrypted: options.pdfType === 'unencrypted' || options.pdfType === 'all',
-            encrypted: options.pdfType === 'encrypted' || options.pdfType === 'all',
-        }),
+    clean: async (options = {}, comicId = null) =>
+        await ComicDownloader.cleanCache(
+            {
+                images: options.includeImages,
+                unencrypted: options.pdfType === 'unencrypted' || options.pdfType === 'all',
+                encrypted: options.pdfType === 'encrypted' || options.pdfType === 'all',
+            },
+            comicId
+        ),
 
     encrypt: async (id) => await ComicDownloader.encryptPDF(id),
 }

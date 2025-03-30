@@ -94,7 +94,7 @@ export class JMComicPlugin extends plugin {
             let config = Config.getConfig('jm')
             TASK_STATUS.delete(taskKey)
             if (config.delete) {
-                const { deletedCount, sizeMB } = await JM.clean({ includeImages: true })
+                const { deletedCount, sizeMB } = await JM.clean({ includeImages: true }, id)
                 if (deletedCount !== 0)
                     await this.sendFormattedReply(e, [
                         `${EMOJI.SUCCESS} 无用Img清理完成`,
@@ -160,7 +160,14 @@ export class JMComicPlugin extends plugin {
     async processPDF(e, id) {
         const config = Config.getConfig('jm')
         const baseMessages = [`${EMOJI.PDF} PDF生成中`, `🆔 ${id}`, `${EMOJI.PASSWORD} 密码: ${id}`]
-
+        if (await JM.find(id, true))
+            try {
+                Logger.info(await JM.find(id, true))
+                return await this.deliverPDF(e, await JM.find(id, true), id, config)
+            } catch (error) {
+                Logger.error(`[JM] 生成失败: ${error}`)
+                return
+            }
         if (!(await JM.find(id))) {
             await this.sendFormattedReply(e, baseMessages)
             await JM.getPdf(id)
