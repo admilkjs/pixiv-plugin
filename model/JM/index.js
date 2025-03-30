@@ -48,7 +48,7 @@ export const check = async function check() {
     } catch {
         Logger.warn('pymupdf 未安装，正在安装...')
         try {
-            await execPromise('python', ['-m', 'pip', 'install', 'pymupdf','-U', '--break-system-packages'])
+            await execPromise('python', ['-m', 'pip', 'install', 'pymupdf', '-U', '--break-system-packages'])
             Logger.info('pymupdf 安装成功')
         } catch (installErr) {
             Logger.error('安装 pymupdf 失败:', installErr)
@@ -116,35 +116,37 @@ class ComicDownloader {
             return []
         }
     }
-    static async cleanComicCache() {
+    static async cleanComicCache(type = ['img', 'pdf']) {
         const imgDir = path.join(Configs.COMIC_BASE_DIR, 'img')
         const pdfDir = path.join(Configs.COMIC_BASE_DIR, 'pdf')
         let deletedCount = 0,
             totalSize = 0
-        try {
-            const imgItems = await fs.readdir(imgDir)
-            for (const item of imgItems) {
-                const itemPath = path.join(imgDir, item)
-                const stat = await fs.stat(itemPath)
-                totalSize += stat.size
-                await fs.rm(itemPath, { recursive: true, force: true })
-                deletedCount++
+        if (type.includes('img'))
+            try {
+                const imgItems = await fs.readdir(imgDir)
+                for (const item of imgItems) {
+                    const itemPath = path.join(imgDir, item)
+                    const stat = await fs.stat(itemPath)
+                    totalSize += stat.size
+                    await fs.rm(itemPath, { recursive: true, force: true })
+                    deletedCount++
+                }
+            } catch (err) {
+                Logger.warn('清理 img 文件夹时出错:', err)
             }
-        } catch (err) {
-            Logger.warn('清理 img 文件夹时出错:', err)
-        }
-        try {
-            const pdfItems = await fs.readdir(pdfDir)
-            for (const item of pdfItems) {
-                const itemPath = path.join(pdfDir, item)
-                const stat = await fs.stat(itemPath)
-                totalSize += stat.size
-                await fs.rm(itemPath, { recursive: true, force: true })
-                deletedCount++
+        if (type.includes('pdf'))
+            try {
+                const pdfItems = await fs.readdir(pdfDir)
+                for (const item of pdfItems) {
+                    const itemPath = path.join(pdfDir, item)
+                    const stat = await fs.stat(itemPath)
+                    totalSize += stat.size
+                    await fs.rm(itemPath, { recursive: true, force: true })
+                    deletedCount++
+                }
+            } catch (err) {
+                Logger.warn('清理 pdf 文件夹时出错:', err)
             }
-        } catch (err) {
-            Logger.warn('清理 pdf 文件夹时出错:', err)
-        }
         return {
             deletedCount,
             sizeMB: (totalSize / 1024 / 1024).toFixed(2),

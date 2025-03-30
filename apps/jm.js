@@ -89,6 +89,13 @@ export class JMComicPlugin extends plugin {
             await this.processPDF(e, id)
         } finally {
             TASK_STATUS.delete(taskKey)
+            const { deletedCount, sizeMB } = await JM.clean(['img'])
+            await this.sendFormattedReply(e, [
+                `${EMOJI.SUCCESS} 无用Img清理完成`,
+                `🗑️ ${deletedCount}个文件`,
+                `💾 ${sizeMB}MB空间释放`,
+                `${EMOJI.PDF} PDF并未删除`,
+            ])
         }
     }
 
