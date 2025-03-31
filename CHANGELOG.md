@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.8.0](https://github.com/admilkjs/pixiv-plugin/compare/v1.7.0...v1.8.0) (2025-03-31)
+
+
+### Features
+
+* **config:** 配置文件修改 ([def85b9](https://github.com/admilkjs/pixiv-plugin/commit/def85b951d8ad3f662265784dc454258b3407160))
+* **express:** 适配Miao ([cedd205](https://github.com/admilkjs/pixiv-plugin/commit/cedd2055773e441a038d85cbcc8596e9bfd4c3a9))
+* **JM:** 优化缓存清理功能并支持选择性清理 ([8b77ccf](https://github.com/admilkjs/pixiv-plugin/commit/8b77ccf4fecba9ab1c117258031363ebaf492e29))
+* **JM:** 随机本子 ([48c19aa](https://github.com/admilkjs/pixiv-plugin/commit/48c19aa0adfce8a58a464ee7f295647108a8a945))
+
+
+### Bug Fixes
+
+* **apps:** 修复 PDF 发送失败问题 ([bf61a31](https://github.com/admilkjs/pixiv-plugin/commit/bf61a315a66aa4cb9098ae8ef46bae743981bc5a))
+* **apps:** 修复直接发送 PDF 失败的问题 ([f803551](https://github.com/admilkjs/pixiv-plugin/commit/f803551eb387f15817ca330762a745640f61bb9b))
+* **apps:** 兼容不同版本的 segment.file ([bb4e482](https://github.com/admilkjs/pixiv-plugin/commit/bb4e482cf82641ba080ce6a3f784b7d93df5584b))
+* **jm:** send ([0191fee](https://github.com/admilkjs/pixiv-plugin/commit/0191fee3ece7704d573c9264d3ac40eb960a0c41))
+* **JM:** 改个help ([a556d8d](https://github.com/admilkjs/pixiv-plugin/commit/a556d8d01fdaf77a98278c47760a9555023d4b5b))
+* **JM:** 自动创建配置文件 ([82a1f79](https://github.com/admilkjs/pixiv-plugin/commit/82a1f793274e79c57204302d9a6d9e78fa7fab6b))
+
 ## [1.7.0](https://github.com/admilkjs/pixiv-plugin/compare/v1.6.0...v1.7.0) (2025-03-30)
 
 
