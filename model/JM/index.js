@@ -125,7 +125,7 @@ class Comic {
             deletedCount += count
             totalSize += size
         }
-
+await init()
         return {
             deletedCount,
             sizeMB: (totalSize / 1024 / 1024).toFixed(2),
