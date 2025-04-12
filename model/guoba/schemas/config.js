@@ -4,7 +4,7 @@ export default [
         component: 'SOFT_GROUP_BEGIN',
     },
     {
-        field: 'network.proxy',
+        field: 'config.proxy',
         label: '代理地址',
         bottomHelpMessage: '支持http/socks5协议（示例：http://127.0.0.1:7890）JM代理需在JM.yaml配置',
         component: 'Input',
