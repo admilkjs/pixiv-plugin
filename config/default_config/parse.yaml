@@ -11,3 +11,8 @@ users_parse: true
 
 # 搜索插画时是否搜索相关插画内容
 search_related: true
+
+# PDF生成模式
+# full - 将所有内容包含在PDF中（包括文字和图片）
+# images_only - 只在PDF中包含图片，文字信息通过聊天记录发送
+pdf_mode: images_only
