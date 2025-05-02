@@ -1,8 +1,6 @@
 export default [
-    {
-        label: '解析功能开关',
-        component: 'SOFT_GROUP_BEGIN',
-    },
+    // 基础功能
+    { label: '基础功能', component: 'SOFT_GROUP_BEGIN' },
     {
         field: 'parse.artworks_parse',
         label: '漫画解析功能',
@@ -21,19 +19,23 @@ export default [
         bottomHelpMessage: '是否启用用户信息解析功能',
         component: 'Switch',
     },
-    {
-        label: '搜索设置',
-        component: 'SOFT_GROUP_BEGIN',
-    },
+    { component: 'SOFT_GROUP_END' },
+
+    // 搜索设置
+    { label: '搜索设置', component: 'SOFT_GROUP_BEGIN' },
     {
         field: 'parse.search_related',
         label: '关联作品搜索',
         bottomHelpMessage: '搜索插画时是否同时搜索相关作品',
         component: 'Switch',
     },
+    { component: 'SOFT_GROUP_END' },
+
+    // PDF设置
+    { label: 'PDF设置', component: 'SOFT_GROUP_BEGIN' },
     {
-        label: 'PDF生成模式',
         field: 'parse.pdf_mode',
+        label: 'PDF生成模式',
         component: 'Select',
         options: [
             { label: '仅图片(images_only)', value: 'images_only' },
@@ -41,10 +43,10 @@ export default [
         ],
         bottomHelpMessage: 'PDF生成时包含内容类型',
     },
-    {
-        label: '图片下载设置',
-        component: 'SOFT_GROUP_BEGIN',
-    },
+    { component: 'SOFT_GROUP_END' },
+
+    // 图片下载设置
+    { label: '图片下载设置', component: 'SOFT_GROUP_BEGIN' },
     {
         field: 'parse.download.retry_count',
         label: '下载重试次数',
@@ -73,10 +75,10 @@ export default [
         min: 1,
         max: 20,
     },
-    {
-        label: '消息发送设置',
-        component: 'SOFT_GROUP_BEGIN',
-    },
+    { component: 'SOFT_GROUP_END' },
+
+    // 消息发送设置
+    { label: '消息发送设置', component: 'SOFT_GROUP_BEGIN' },
     {
         field: 'parse.message.max_length',
         label: '最大消息长度',
@@ -98,10 +100,10 @@ export default [
         min: 0,
         max: 5000,
     },
-    {
-        label: '内容限制',
-        component: 'SOFT_GROUP_BEGIN',
-    },
+    { component: 'SOFT_GROUP_END' },
+
+    // 内容限制
+    { label: '内容限制', component: 'SOFT_GROUP_BEGIN' },
     {
         field: 'parse.limits.max_title_length',
         label: '标题最大长度',
@@ -123,10 +125,10 @@ export default [
         min: 5,
         max: 30,
     },
-    {
-        label: '文件相关',
-        component: 'SOFT_GROUP_BEGIN',
-    },
+    { component: 'SOFT_GROUP_END' },
+
+    // 文件相关
+    { label: '文件相关', component: 'SOFT_GROUP_BEGIN' },
     {
         field: 'parse.file.max_image_size',
         label: '最大图片大小(字节)',
@@ -144,4 +146,5 @@ export default [
         label: '字体文件路径',
         component: 'Input',
     },
+    { component: 'SOFT_GROUP_END' },
 ]
