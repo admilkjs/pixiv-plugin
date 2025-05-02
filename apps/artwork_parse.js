@@ -555,7 +555,7 @@ class ImageDownloader {
       if (failedCount > 0) {
         options.progressCallback(`图片下载完成，成功: ${downloadedImages.length}张，失败: ${failedCount}张`);
       } else {
-        options.progressCallback(`全部${downloadedImages.length}张图片下载成功`);
+        //options.progressCallback(`全部${downloadedImages.length}张图片下载成功`);
       }
     }
     
