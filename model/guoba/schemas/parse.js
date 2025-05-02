@@ -37,10 +37,12 @@ export default [
         field: 'parse.pdf_mode',
         label: 'PDF生成模式',
         component: 'Select',
-        options: [
-            { label: '仅图片(images_only)', value: 'images_only' },
-            { label: '完整信息(full)', value: 'full' }
-        ],
+        componentProps: {
+            options: [
+                { label: '仅图片(images_only)', value: 'images_only' },
+                { label: '完整信息(full)', value: 'full' }
+            ]
+        },
         bottomHelpMessage: 'PDF生成时包含内容类型'
     },
 
