@@ -524,7 +524,7 @@ class ImageDownloader {
     Logger.info(`开始下载图片，共${artworks.length}张，重试次数: ${retryCount}, 延迟: ${delayBetweenImages}ms, 并发数: ${concurrent}`);
     
     if (options.progressCallback) {
-      options.progressCallback(`开始下载${artworks.length}张图片`);
+      options.progressCallback(`开始下载${artworks.length}张图片，可能需要一些时间...`);
     }
     
     // 分批下载图片
@@ -865,9 +865,6 @@ export default class extends plugin {
       
       let downloadedImages = [];
       if (artworks.length > 0) {
-        if (artworks.length > 3) {
-          await e.reply(`开始下载${artworks.length}张图片，这可能需要一些时间...`);
-        }
         
         downloadedImages = await this.imageDownloader.downloadImages(artworks, pid, cacheDir, {
           progressCallback: async (message) => {
