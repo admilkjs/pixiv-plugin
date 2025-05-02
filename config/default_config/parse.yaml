@@ -15,4 +15,42 @@ search_related: true
 # PDF生成模式
 # full - 将所有内容包含在PDF中（包括文字和图片）
 # images_only - 只在PDF中包含图片，文字信息通过聊天记录发送
-pdf_mode: images_only
+pdf_mode: full
+
+# 图片下载相关配置
+download:
+  # 下载重试次数
+  retry_count: 2
+  # 下载重试延迟（毫秒）
+  retry_delay: 0
+  # 最大重试延迟（毫秒）
+  max_retry_delay: 2000
+  # 并发下载数量
+  concurrent: 10
+
+# 消息发送相关配置
+message:
+  # 最大消息长度
+  max_length: 3000
+  # 最大行长度
+  max_line_length: 1000
+  # 消息间延迟（毫秒）
+  delay: 300
+
+# 内容限制配置
+limits:
+  # 标题最大长度
+  max_title_length: 50
+  # 标签最大数量
+  max_tags_count: 15
+  # 相关作品最大数量
+  max_related_works: 10
+
+# 文件相关配置
+file:
+  # 最大图片大小（字节）
+  max_image_size: 20971520  # 20MB
+  # 缓存目录
+  cache_dir: data/pixiv-cache
+  # 字体文件路径
+  font_path: ./plugins/pixiv-plugin/resources/fonts/SourceHanSansCN-Normal.otf
