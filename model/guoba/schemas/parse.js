@@ -21,32 +21,30 @@ export default [
     },
     { component: 'SOFT_GROUP_END' },
 
-    // 搜索设置
-    { label: '搜索设置', component: 'SOFT_GROUP_BEGIN' },
+    // 高级设置（所有新加配置都放这里）
+    { label: '高级设置', component: 'SOFT_GROUP_BEGIN' },
+
+    // 搜索
     {
         field: 'parse.search_related',
         label: '关联作品搜索',
         bottomHelpMessage: '搜索插画时是否同时搜索相关作品',
         component: 'Switch',
     },
-    { component: 'SOFT_GROUP_END' },
 
-    // PDF设置
-    { label: 'PDF设置', component: 'SOFT_GROUP_BEGIN' },
+    // PDF
     {
         field: 'parse.pdf_mode',
         label: 'PDF生成模式',
         component: 'Select',
         options: [
             { label: '仅图片(images_only)', value: 'images_only' },
-            { label: '完整信息(full)', value: 'full' },
+            { label: '完整信息(full)', value: 'full' }
         ],
-        bottomHelpMessage: 'PDF生成时包含内容类型',
+        bottomHelpMessage: 'PDF生成时包含内容类型'
     },
-    { component: 'SOFT_GROUP_END' },
 
-    // 图片下载设置
-    { label: '图片下载设置', component: 'SOFT_GROUP_BEGIN' },
+    // 下载
     {
         field: 'parse.download.retry_count',
         label: '下载重试次数',
@@ -75,10 +73,8 @@ export default [
         min: 1,
         max: 20,
     },
-    { component: 'SOFT_GROUP_END' },
 
-    // 消息发送设置
-    { label: '消息发送设置', component: 'SOFT_GROUP_BEGIN' },
+    // 消息
     {
         field: 'parse.message.max_length',
         label: '最大消息长度',
@@ -100,10 +96,8 @@ export default [
         min: 0,
         max: 5000,
     },
-    { component: 'SOFT_GROUP_END' },
 
     // 内容限制
-    { label: '内容限制', component: 'SOFT_GROUP_BEGIN' },
     {
         field: 'parse.limits.max_title_length',
         label: '标题最大长度',
@@ -125,10 +119,8 @@ export default [
         min: 5,
         max: 30,
     },
-    { component: 'SOFT_GROUP_END' },
 
-    // 文件相关
-    { label: '文件相关', component: 'SOFT_GROUP_BEGIN' },
+    // 文件
     {
         field: 'parse.file.max_image_size',
         label: '最大图片大小(字节)',
@@ -146,5 +138,6 @@ export default [
         label: '字体文件路径',
         component: 'Input',
     },
+
     { component: 'SOFT_GROUP_END' },
 ]
