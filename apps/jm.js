@@ -81,70 +81,11 @@ export class JMComicPlugin extends plugin {
         return true
     }
     async random(e) {
-        const at = e.user_id
         //随机范围1-474493
         let randomNum = Math.floor(Math.random() * (474493 - 1 + 1)) + 1
-        const message = [{ type: 'text', text: `#jm ${randomNum}` }]
-        const msg = `#jm ${randomNum}`
-        const loader = (await import('../../../lib/plugins/loader.js')).default
-        const new_e = {
-            atall: e.atall,
-            atme: e.atme,
-            block: e.block,
-            font: e.font,
-            from_id: at,
-            isGroup: e.isGroup,
-            isMaster: e.isMaster,
-            message: message,
-            message_id: e.message_id,
-            message_type: e.message_type,
-            msg_id: e.msg_id,
-            nt: e.nt,
-            original_msg: msg,
-            post_type: e.post_type,
-            rand: e.rand,
-            raw_message: msg,
-            recall: e.recall,
-            reply: e.reply,
-            self_id: e.self_id,
-            sender: e.sender,
-            seq: e.seq,
-            sub_type: e.sub_type,
-            time: e.time,
-            user_id: at,
-            bot: e.bot || { adapter: { name: 'ICQQ' } }
-        }
-
-        // 群聊特殊处理
-        if (e.isGroup) {
-            new_e.group = e.group
-            new_e.group_id = e.group_id
-            new_e.group_name = e.group_name
-            new_e.member = e.member
-            new_e.sender = e.sender || {
-                card: e.sender?.card || at,
-                nickname: e.sender?.nickname || at,
-                user_id: at,
-            }
-        } else {
-            new_e.friend = e.friend
-            new_e.sender = e.sender || {
-                card: at,
-                nickname: at,
-                user_id: at,
-            }
-        }
-
-        // 清除CD
-        if (loader.groupGlobalCD) delete loader.groupGlobalCD[e.group_id]
-        if (loader.groupCD) delete loader.groupCD[e.group_id]
-
-        try {
-            bot.emit('message', { ...new_e })
-        } catch {
-            loader.deal({ ...new_e })
-        }
-        return true
+        await e.reply(`${EMOJI.PDF} 随机本子ID: ${randomNum}`)
+        // 直接调用pdf方法
+        return await this.pdf(e, `#jm ${randomNum}`)
     }
     async pdf(e) {
         const id = this.extractId(e.msg)
@@ -270,14 +211,19 @@ export class JMComicPlugin extends plugin {
         try {
             await e.reply(`${EMOJI.PDF} PDF生成完成\n${EMOJI.LOCK} 正在发送PDF...`)
             let res
-            if (!segment.file)
+            if (!segment.file) {
                 if (e.isGroup) {
                     if (e.group.sendFile) res = await e.group.sendFile(pdfPath)
                     else res = await e.group.fs.upload(pdfPath)
                 } else {
                     res = await e.friend.sendFile(pdfPath)
                 }
-            else res = await e.reply(segment.file(pdfPath))
+            } else {
+                // 确保文件路径是绝对路径
+                const absolutePath = path.resolve(pdfPath)
+                const fileName = path.basename(pdfPath)
+                res = await e.reply(segment.file(absolutePath, fileName))
+            }
             if (!res) throw res
             return
         } catch (error) {
