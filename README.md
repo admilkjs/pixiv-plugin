@@ -68,66 +68,29 @@ pip install pymupdf jmcomic img2pdf -U --break-system-packages
 ln -s /usr/bin/python3 /usr/bin/python
 ```
 
-## PDF生成中文问题解决方案
+### Windows环境变量配置
 
-当使用pdf-lib生成包含中文字符的PDF时，可能会遇到以下错误：
+如果你使用Windows系统，需要额外配置以下环境变量:
 
-```
-WinAnsi cannot encode "作" (0x4f5c)
-```
-
-这是因为PDF-lib默认使用的标准字体不支持中文字符。解决方案是：
-
-1. 使用fontkit和自定义中文字体：
-   - 安装`@pdf-lib/fontkit`
-   - 下载中文字体如Source Han Sans
-   - 在创建PDF时注册fontkit并嵌入中文字体
-
-2. 智能中文替换：
-   - 如果无法加载中文字体，使用英文单词替换常见中文词汇
-   - 例如："相关作品" → "Related Works"，"标题" → "Title" 等
-   - 对于无法映射的中文字符，替换为下划线而非乱码
-   - 自动标记PDF中的字体状态，让用户了解当前显示模式
-
-3. 分级降级处理：
-   - 第一级：尝试使用中文字体生成完整PDF
-   - 第二级：如果中文字体不可用，使用英文替换生成可读的PDF
-   - 第三级：如果PDF生成完全失败，退回到直接发送文本和图片
-
-## 图片处理和格式问题
-
-PDF-lib对图片格式有严格要求，可能会出现以下错误：
-
-```
-The input is not a PNG file!
-```
-
-解决方案：
-
-1. 使用sharp库进行图片处理（推荐）：
-   - 安装`sharp`库 (`npm install sharp --save`)
-   - 自动将各种格式的图片转换为PDF兼容的PNG格式
-   - 自动调整图片大小以适应PDF页面
-
-2. 备用方案：图片格式检测
-   - 自动检测图片是PNG还是JPEG格式
-   - 根据不同格式使用正确的嵌入方法
-   - 支持直接嵌入PNG和JPEG格式的图片
-
-## 安装步骤
-
-1. 安装依赖：
+1. 打开系统环境变量设置
+   - 右键"此电脑" -> 属性 -> 高级系统设置 -> 环境变量
+   
+2. 在"系统变量"中找到 Path 变量并编辑
+   - 如果没有以下路径,请添加:
    ```
-   npm install @pdf-lib/fontkit sharp --save
+   C:\Windows\System32
+   C:\Program Files\Python311 (根据你的Python版本修改)
+   C:\Program Files\Python311\Scripts
    ```
 
-2. 创建fonts目录并下载中文字体：
-   ```
-   mkdir -p resources/fonts
-   # 下载Source Han Sans字体到resources/fonts目录
-   ```
+3. 确认Python安装正确
+   - 打开命令提示符(CMD)
+   - 输入 `python --version` 确认能显示Python版本
+   - 输入 `pip --version` 确认能显示pip版本
 
-3. 如果中文字体不可用，代码会自动使用标准字体并将中文字符转换为安全文本。
+4. 重启终端和云崽后即可正常使用
+
+
 
 ## PDF生成模式
 

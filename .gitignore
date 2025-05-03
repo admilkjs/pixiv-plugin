@@ -1,6 +1,8 @@
 # config
 config/config
 
+node_modules
+
 # 编辑器配置
 .vscode
 .idea

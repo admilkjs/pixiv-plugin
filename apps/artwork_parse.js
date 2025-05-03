@@ -1028,10 +1028,18 @@ export default class extends plugin {
       const encryptedPath = await JM.encrypt(pid, jmPdfPath); // JM加密，返回加密PDF路径
       await e.reply(`已生成加密PDF文件，正在发送...\n密码为作品ID: ${pid}`);
       await this.messageSender.sendPDFFile(e, encryptedPath, `pixiv_${pid}_encrypted`);
+      // 发送后立即清理文件
+      await Promise.all([
+        fs.promises.unlink(pdfPath).catch(err => Logger.error('清理未加密PDF失败:', err)),
+        fs.promises.unlink(encryptedPath).catch(err => Logger.error('清理加密PDF失败:', err)),
+        fs.promises.unlink(jmPdfPath).catch(err => Logger.error('清理JM PDF失败:', err))
+      ]);
     } catch (err) {
       Logger.error('PDF加密失败', err);
       await e.reply('PDF加密失败，发送未加密版本。');
       await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
+      // 发送后立即清理文件
+      await fs.promises.unlink(pdfPath).catch(err => Logger.error('清理PDF失败:', err));
     }
   }
 
@@ -1042,10 +1050,18 @@ export default class extends plugin {
       const encryptedPath = await JM.encrypt(pid, jmPdfPath); // JM加密，返回加密PDF路径
       await e.reply(`已生成加密PDF文件，正在发送...\n密码为作品ID: ${pid}`);
       await this.messageSender.sendPDFFile(e, encryptedPath, `pixiv_${pid}_encrypted`);
+      // 发送后立即清理文件
+      await Promise.all([
+        fs.promises.unlink(pdfPath).catch(err => Logger.error('清理未加密PDF失败:', err)),
+        fs.promises.unlink(encryptedPath).catch(err => Logger.error('清理加密PDF失败:', err)),
+        fs.promises.unlink(jmPdfPath).catch(err => Logger.error('清理JM PDF失败:', err))
+      ]);
     } catch (err) {
       Logger.error('PDF加密失败', err);
       await e.reply('PDF加密失败，发送未加密版本。');
       await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
+      // 发送后立即清理文件
+      await fs.promises.unlink(pdfPath).catch(err => Logger.error('清理PDF失败:', err));
     }
   }
 
