@@ -1564,18 +1564,20 @@ export default class extends plugin {
       // 创建只包含图片的PDF
       await this.pdfGenerator.generateImageOnlyPDF(pdfPath, downloadedImages);
       
-      // 发送文字信息
-      await e.reply(infoText);
+      // 直接发送基本信息
+      if (infoText) {
+        await e.reply(infoText);
+      }
       
-      if (relatedText && relatedText.length > 0) {
+      // 如果有相关作品信息，也直接发送
+      if (relatedText) {
         await e.reply(relatedText);
       }
       
-      // 发送PDF文件
-      if (await Utils.fileExists(pdfPath)) {
-        await e.reply(segment.file(pdfPath));
-      } else {
+      // 检查PDF文件是否生成成功
+      if (!await Utils.fileExists(pdfPath)) {
         await e.reply("PDF生成失败，请查看日志");
+        return false;
       }
       
       try {
@@ -1603,7 +1605,7 @@ export default class extends plugin {
     }
   }
 
-  async handleFullMode(e, title, infoText, downloadedImages, relatedText, pdfPath, pid) {
+  async handleFullMode(e, pid, title, infoText, downloadedImages, relatedText, pdfPath) {
     await this.pdfGenerator.generatePDF(pdfPath, title, infoText, downloadedImages, relatedText);
     try {
       const jmPdfPath = await copyFileToJM(pdfPath, pid);
@@ -1615,11 +1617,13 @@ export default class extends plugin {
         fs.promises.unlink(encryptedPath).catch(err => Logger.error('清理加密PDF失败:', err)),
         fs.promises.unlink(jmPdfPath).catch(err => Logger.error('清理JM PDF失败:', err))
       ]);
+      return true;
     } catch (err) {
       Logger.error('PDF加密失败', err);
       await e.reply('PDF加密失败，发送未加密版本。');
       await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
       await fs.promises.unlink(pdfPath).catch(err => Logger.error('清理PDF失败:', err));
+      return true;
     }
   }
 
