@@ -94,8 +94,7 @@ export class JMComicPlugin extends plugin {
             font: e.font,
             from_id: at,
             isGroup: e.isGroup,
-            isMaster: false,
-            // member: e.group.pickMember(at),
+            isMaster: e.isMaster,
             message: message,
             message_id: e.message_id,
             message_type: e.message_type,
@@ -105,31 +104,41 @@ export class JMComicPlugin extends plugin {
             post_type: e.post_type,
             rand: e.rand,
             raw_message: msg,
-            recall: e.reacall,
+            recall: e.recall,
             reply: e.reply,
             self_id: e.self_id,
-            sender: {},
+            sender: e.sender,
             seq: e.seq,
             sub_type: e.sub_type,
             time: e.time,
             user_id: at,
+            bot: e.bot || { adapter: { name: 'ICQQ' } }
         }
-        new_e.sender = new_e.member?.info || {
-            card: at,
-            nickname: at,
-            user_id: at,
-        }
-        if (loader.groupGlobalCD) delete loader.groupGlobalCD[e.group_id]
-        if (loader.groupCD) delete loader.groupCD[e.group_id]
-        if (e.bot?.adapter?.name) new_e.bot = { adapter: { name: e.bot.adapter.name } }
-        else new_e.bot = { adapter: { name: 'ICQQ' } }
+
+        // 群聊特殊处理
         if (e.isGroup) {
             new_e.group = e.group
             new_e.group_id = e.group_id
             new_e.group_name = e.group_name
+            new_e.member = e.member
+            new_e.sender = e.sender || {
+                card: e.sender?.card || at,
+                nickname: e.sender?.nickname || at,
+                user_id: at,
+            }
         } else {
             new_e.friend = e.friend
+            new_e.sender = e.sender || {
+                card: at,
+                nickname: at,
+                user_id: at,
+            }
         }
+
+        // 清除CD
+        if (loader.groupGlobalCD) delete loader.groupGlobalCD[e.group_id]
+        if (loader.groupCD) delete loader.groupCD[e.group_id]
+
         try {
             bot.emit('message', { ...new_e })
         } catch {
