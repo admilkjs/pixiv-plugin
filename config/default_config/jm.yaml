@@ -12,6 +12,8 @@ host: ""
 port: 2536
 # 在发送PDF后是否删除本地图片文件
 delete: false
+# 在生成结束后是否删除所有文件（包括图片和PDF）
+deleteAll: false
 
 # 本子下载相关
 download:

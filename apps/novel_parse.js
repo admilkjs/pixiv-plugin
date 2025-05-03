@@ -25,23 +25,62 @@ export default class extends plugin {
     const [_, seriesId, showId] = match;
 
     if (showId) {
-      const info = await Novel(showId);
-      const msg = await e.runtime.common.makeForwardMsg(e, [
-        `标题: ${info.title}`,
-        `内容: ${info.content}`,
-      ]);
-      e.reply(msg);
+      try {
+        const info = await Novel(showId);
+        const msg = [
+          {
+            type: 'node',
+            data: {
+              name: 'Pixiv小说',
+              uin: e.bot.uin,
+              content: [
+                `标题: ${info.title}`,
+                `作者: ${info.userName}`,
+                `内容: ${info.content}`
+              ].join('\n')
+            }
+          }
+        ];
+        await e.reply(msg);
+      } catch (error) {
+        await e.reply('获取小说信息失败，请重试');
+      }
     } else if (seriesId) {
-      const info = await Novels(seriesId);
-      const seriesName = info[0].seriesTitle;
-      const msg = await Promise.all(
-        info.map(async (item) => {
-          const { title, content } = await Novel(item.id);
-          return [`标题: ${title}`, `内容: ${content}`];
-        }),
-      );
-      msg.unshift(`系列: ${seriesName}`);
-      e.reply(await e.runtime.common.makeForwardMsg(e, msg.flat()));
+      try {
+        const info = await Novels(seriesId);
+        const seriesName = info[0].seriesTitle;
+        
+        const msg = [
+          {
+            type: 'node',
+            data: {
+              name: 'Pixiv小说系列',
+              uin: e.bot.uin,
+              content: `系列: ${seriesName}`
+            }
+          }
+        ];
+
+        for (const item of info) {
+          const novelInfo = await Novel(item.id);
+          msg.push({
+            type: 'node',
+            data: {
+              name: 'Pixiv小说',
+              uin: e.bot.uin,
+              content: [
+                `标题: ${novelInfo.title}`,
+                `作者: ${novelInfo.userName}`,
+                `内容: ${novelInfo.content}`
+              ].join('\n')
+            }
+          });
+        }
+
+        await e.reply(msg);
+      } catch (error) {
+        await e.reply('获取系列小说信息失败，请重试');
+      }
     }
   }
 }

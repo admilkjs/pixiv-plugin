@@ -200,10 +200,10 @@ await init()
                 comicId.toString(),
             ])
 
-            return stderr ? null : targetPath
+            return stderr ? sourcePath : targetPath
         } catch (err) {
             Logger.error('PDF加密失败:', err)
-            return null
+            return sourcePath
         }
     }
 }

@@ -162,7 +162,12 @@ export class JMComicPlugin extends plugin {
         } finally {
             let config = Config.getConfig('jm')
             TASK_STATUS.delete(taskKey)
-            if (config.delete) {
+            if (config.deleteAll) {
+                // 删除所有相关文件（图片和PDF）
+                const { deletedCount, sizeMB } = await JM.clean({ includeImages: true, pdfType: 'all' }, id)
+                Logger.info(`[JM] deleteAll已启用，已删除${deletedCount}个文件，释放${sizeMB}MB`)
+            } else if (config.delete) {
+                // 只删除图片
                 const { deletedCount, sizeMB } = await JM.clean({ includeImages: true }, id)
                 if (deletedCount !== 0)
                     await this.sendFormattedReply(e, [
@@ -229,25 +234,52 @@ export class JMComicPlugin extends plugin {
     async processPDF(e, id) {
         const config = Config.getConfig('jm')
         const baseMessages = [`${EMOJI.PDF} PDF生成中`, `🆔 ${id}`, `${EMOJI.PASSWORD} 密码: ${id}`]
-        if (await JM.find(id, true))
+        
+        // 检查是否已有加密PDF
+        if (await JM.find(id, true)) {
             try {
-                Logger.info(await JM.find(id, true))
+                Logger.info(`[JM] 找到已加密PDF: ${id}`)
                 return await this.deliverPDF(e, await JM.find(id, true), id, config)
             } catch (error) {
-                Logger.error(`[JM] 生成失败: ${error}`)
+                Logger.error(`[JM] 处理已加密PDF失败: ${error}`)
                 return
             }
+        }
+
+        // 检查是否有未加密PDF，如果没有则下载并生成
         if (!(await JM.find(id))) {
             await this.sendFormattedReply(e, baseMessages)
-            await JM.getPdf(id)
+            try {
+                // 先下载本子
+                const downloadResult = await JM.download(id)
+                if (!downloadResult) {
+                    throw new Error('下载失败')
+                }
+                // 生成PDF
+                await JM.getPdf(id)
+            } catch (error) {
+                Logger.error(`[JM] 下载或生成PDF失败: ${error}`)
+                await e.reply(`${EMOJI.ERROR} 下载或生成PDF失败，请重试`)
+                return
+            }
+        }
+
+        // 确保未加密PDF存在
+        const unencryptedPath = await JM.find(id)
+        if (!unencryptedPath) {
+            await e.reply(`${EMOJI.ERROR} 未找到PDF文件，请重试`)
+            return
         }
 
         try {
+            // 生成加密PDF
             const pdfPath = await JM.encrypt(id)
-            if (!pdfPath) throw new Error('PDF加密失败')
+            if (!pdfPath) {
+                throw new Error('PDF加密失败')
+            }
             await this.deliverPDF(e, pdfPath, id, config)
         } catch (error) {
-            Logger.error(`[JM] 生成失败: ${error}`)
+            Logger.error(`[JM] 生成PDF失败: ${error}`)
             await e.reply([`${EMOJI.ERROR} 生成中断`, '🔧 请重试或检查这本本子是否存在'].join('\n'))
         }
     }
