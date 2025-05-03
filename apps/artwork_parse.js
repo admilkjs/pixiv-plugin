@@ -379,6 +379,21 @@ class PDFGenerator {
       color: rgb(0.98, 0.98, 0.98), // 非常淡的背景
     });
 
+    // 确保info是字符串类型
+    if (typeof info !== 'string') {
+      Logger.warn(`PDF生成时info参数不是字符串类型: ${typeof info}，尝试转换`);
+      if (info === null || info === undefined) {
+        info = "无法获取作品信息";
+      } else {
+        try {
+          info = String(info);
+        } catch (e) {
+          Logger.error("转换info为字符串失败", e);
+          info = "无法获取作品信息";
+        }
+      }
+    }
+
     // 将信息分为三部分：基本信息、标签信息和链接
     const infoLines = info.split('\n');
     let basicInfoLines = [];
@@ -1605,7 +1620,7 @@ export default class extends plugin {
     }
   }
 
-  async handleFullMode(e, pid, title, infoText, downloadedImages, relatedText, pdfPath) {
+  async handleFullMode(e, title, infoText, downloadedImages, relatedText, pdfPath, pid) {
     await this.pdfGenerator.generatePDF(pdfPath, title, infoText, downloadedImages, relatedText);
     try {
       const jmPdfPath = await copyFileToJM(pdfPath, pid);
