@@ -9,6 +9,7 @@ import { pipeline } from "stream/promises";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import sharp from "sharp";
+import { JM } from '#model';
 
 // 常量定义
 const CONSTANTS = {
@@ -789,6 +790,17 @@ class MessageSender {
   }
 }
 
+// 拷贝PDF到JM的unencrypted目录
+async function copyFileToJM(pdfPath, pid) {
+  const jmUnencryptedDir = path.resolve(process.cwd(), 'plugins/pixiv-plugin/resources/JM/pdf/unencrypted');
+  const jmEncryptedDir = path.resolve(process.cwd(), 'plugins/pixiv-plugin/resources/JM/pdf/encrypted');
+  if (!fs.existsSync(jmUnencryptedDir)) fs.mkdirSync(jmUnencryptedDir, { recursive: true });
+  if (!fs.existsSync(jmEncryptedDir)) fs.mkdirSync(jmEncryptedDir, { recursive: true });
+  const jmPdfPath = path.join(jmUnencryptedDir, `${pid}.pdf`);
+  await fs.promises.copyFile(pdfPath, jmPdfPath);
+  return jmPdfPath;
+}
+
 // 主类
 export default class extends plugin {
   constructor() {
@@ -1010,75 +1022,31 @@ export default class extends plugin {
   }
 
   async handleImagesOnlyMode(e, pid, title, infoText, relatedText, downloadedImages, pdfPath) {
-    const forwardMessages = [
-      {
-        message: `Pixiv作品 ${pid} - ${title || "无标题"}`,
-        nickname: Bot.nickname || "Pixiv-Plugin",
-        user_id: Bot.uin
-      },
-      {
-        message: `基本信息：\n${infoText}`,
-        nickname: Bot.nickname || "Pixiv-Plugin",
-        user_id: Bot.uin
-      }
-    ];
-    
-    if (relatedText?.trim()) {
-      forwardMessages.push({
-        message: `相关作品信息：\n${relatedText}`,
-        nickname: Bot.nickname || "Pixiv-Plugin",
-        user_id: Bot.uin
-      });
-    }
-    
-    let forwardSuccess = false;
-    try {
-      if (typeof Bot.makeForwardMsg === 'function') {
-        const opts = e.isGroup ? {} : { target: e.user_id };
-        await e.reply(await Bot.makeForwardMsg(forwardMessages, opts));
-        forwardSuccess = true;
-      }
-      
-      if (!forwardSuccess && segment?.forward) {
-        await e.reply(segment.forward(forwardMessages));
-        forwardSuccess = true;
-      }
-      
-      if (!forwardSuccess) {
-        const makeForwardMsgFunc = e.isGroup ? 
-          e.group?.makeForwardMsg : 
-          e.friend?.makeForwardMsg;
-        
-        if (makeForwardMsgFunc) {
-          await e.reply(await makeForwardMsgFunc(forwardMessages));
-          forwardSuccess = true;
-        }
-      }
-    } catch (err) {
-      Logger.error(`发送合并转发消息失败: ${err.message}`);
-    }
-    
-    if (!forwardSuccess) {
-      const textContent = [`作品ID: ${pid} 的基本信息：\n${infoText}`];
-      if (relatedText?.trim()) {
-        textContent.push(`相关作品信息：\n${relatedText}`);
-      }
-      
-      for (const text of textContent) {
-        await this.messageSender.sendChatRecord(e, "Pixiv作品详细信息", text, true);
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
-    }
-    
     await this.pdfGenerator.generateImageOnlyPDF(pdfPath, downloadedImages);
-    await e.reply(`已生成作品图片PDF文件，正在发送...`);
-    await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
+    try {
+      const jmPdfPath = await copyFileToJM(pdfPath, pid);
+      const encryptedPath = await JM.encrypt(pid, jmPdfPath); // JM加密，返回加密PDF路径
+      await e.reply(`已生成加密PDF文件，正在发送...\n密码为作品ID: ${pid}`);
+      await this.messageSender.sendPDFFile(e, encryptedPath, `pixiv_${pid}_encrypted`);
+    } catch (err) {
+      Logger.error('PDF加密失败', err);
+      await e.reply('PDF加密失败，发送未加密版本。');
+      await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
+    }
   }
 
   async handleFullMode(e, title, infoText, downloadedImages, relatedText, pdfPath, pid) {
     await this.pdfGenerator.generatePDF(pdfPath, title, infoText, downloadedImages, relatedText);
-    await e.reply(`已生成作品"${title}"的PDF文件，正在发送...`);
-    await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
+    try {
+      const jmPdfPath = await copyFileToJM(pdfPath, pid);
+      const encryptedPath = await JM.encrypt(pid, jmPdfPath); // JM加密，返回加密PDF路径
+      await e.reply(`已生成加密PDF文件，正在发送...\n密码为作品ID: ${pid}`);
+      await this.messageSender.sendPDFFile(e, encryptedPath, `pixiv_${pid}_encrypted`);
+    } catch (err) {
+      Logger.error('PDF加密失败', err);
+      await e.reply('PDF加密失败，发送未加密版本。');
+      await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
+    }
   }
 
   async handleError(e, error, pid) {
