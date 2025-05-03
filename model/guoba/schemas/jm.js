@@ -67,6 +67,12 @@ export default [
         component: 'Switch',
     },
     {
+        field: 'jm.deleteAll',
+        label: '生成后删除所有文件',
+        bottomHelpMessage: '生成结束后自动删除所有相关文件（包括图片和PDF）',
+        component: 'Switch',
+    },
+    {
         field: 'jm.download.image.decode',
         label: '是否解码为原图',
         bottomHelpMessage: '是否解码为原图',
@@ -94,4 +100,5 @@ export default [
             placeholder: '请输入同时下载的章节数',
         },
     },
+    { component: 'SOFT_GROUP_END' },
 ]

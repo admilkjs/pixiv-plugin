@@ -162,7 +162,12 @@ export class JMComicPlugin extends plugin {
         } finally {
             let config = Config.getConfig('jm')
             TASK_STATUS.delete(taskKey)
-            if (config.delete) {
+            if (config.deleteAll) {
+                // 删除所有相关文件（图片和PDF）
+                const { deletedCount, sizeMB } = await JM.clean({ includeImages: true, pdfType: 'all' }, id)
+                Logger.info(`[JM] deleteAll已启用，已删除${deletedCount}个文件，释放${sizeMB}MB`)
+            } else if (config.delete) {
+                // 只删除图片
                 const { deletedCount, sizeMB } = await JM.clean({ includeImages: true }, id)
                 if (deletedCount !== 0)
                     await this.sendFormattedReply(e, [
