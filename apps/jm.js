@@ -81,11 +81,61 @@ export class JMComicPlugin extends plugin {
         return true
     }
     async random(e) {
+        const at = e.user_id
         //随机范围1-474493
         let randomNum = Math.floor(Math.random() * (474493 - 1 + 1)) + 1
-        await e.reply(`${EMOJI.PDF} 随机本子ID: ${randomNum}`)
-        // 直接调用pdf方法
-        return await this.pdf(e, `#jm ${randomNum}`)
+        const message = [{ type: 'text', text: `#jm ${randomNum}` }]
+        const msg = `#jm ${randomNum}`
+        const loader = (await import('../../../lib/plugins/loader.js')).default
+        const new_e = {
+            atall: e.atall,
+            atme: e.atme,
+            block: e.block,
+            font: e.font,
+            from_id: at,
+            isGroup: e.isGroup,
+            isMaster: false,
+            // member: e.group.pickMember(at),
+            message: message,
+            message_id: e.message_id,
+            message_type: e.message_type,
+            msg_id: e.msg_id,
+            nt: e.nt,
+            original_msg: msg,
+            post_type: e.post_type,
+            rand: e.rand,
+            raw_message: msg,
+            recall: e.reacall,
+            reply: e.reply,
+            self_id: e.self_id,
+            sender: {},
+            seq: e.seq,
+            sub_type: e.sub_type,
+            time: e.time,
+            user_id: at,
+        }
+        new_e.sender = new_e.member?.info || {
+            card: at,
+            nickname: at,
+            user_id: at,
+        }
+        if (loader.groupGlobalCD) delete loader.groupGlobalCD[e.group_id]
+        if (loader.groupCD) delete loader.groupCD[e.group_id]
+        if (e.bot?.adapter?.name) new_e.bot = { adapter: { name: e.bot.adapter.name } }
+        else new_e.bot = { adapter: { name: 'ICQQ' } }
+        if (e.isGroup) {
+            new_e.group = e.group
+            new_e.group_id = e.group_id
+            new_e.group_name = e.group_name
+        } else {
+            new_e.friend = e.friend
+        }
+        try {
+            bot.emit('message', { ...new_e })
+        } catch {
+            loader.deal({ ...new_e })
+        }
+        return true
     }
     async pdf(e) {
         const id = this.extractId(e.msg)
@@ -184,25 +234,52 @@ export class JMComicPlugin extends plugin {
     async processPDF(e, id) {
         const config = Config.getConfig('jm')
         const baseMessages = [`${EMOJI.PDF} PDF生成中`, `🆔 ${id}`, `${EMOJI.PASSWORD} 密码: ${id}`]
-        if (await JM.find(id, true))
+        
+        // 检查是否已有加密PDF
+        if (await JM.find(id, true)) {
             try {
-                Logger.info(await JM.find(id, true))
+                Logger.info(`[JM] 找到已加密PDF: ${id}`)
                 return await this.deliverPDF(e, await JM.find(id, true), id, config)
             } catch (error) {
-                Logger.error(`[JM] 生成失败: ${error}`)
+                Logger.error(`[JM] 处理已加密PDF失败: ${error}`)
                 return
             }
+        }
+
+        // 检查是否有未加密PDF，如果没有则下载并生成
         if (!(await JM.find(id))) {
             await this.sendFormattedReply(e, baseMessages)
-            await JM.getPdf(id)
+            try {
+                // 先下载本子
+                const downloadResult = await JM.download(id)
+                if (!downloadResult) {
+                    throw new Error('下载失败')
+                }
+                // 生成PDF
+                await JM.getPdf(id)
+            } catch (error) {
+                Logger.error(`[JM] 下载或生成PDF失败: ${error}`)
+                await e.reply(`${EMOJI.ERROR} 下载或生成PDF失败，请重试`)
+                return
+            }
+        }
+
+        // 确保未加密PDF存在
+        const unencryptedPath = await JM.find(id)
+        if (!unencryptedPath) {
+            await e.reply(`${EMOJI.ERROR} 未找到PDF文件，请重试`)
+            return
         }
 
         try {
+            // 生成加密PDF
             const pdfPath = await JM.encrypt(id)
-            if (!pdfPath) throw new Error('PDF加密失败')
+            if (!pdfPath) {
+                throw new Error('PDF加密失败')
+            }
             await this.deliverPDF(e, pdfPath, id, config)
         } catch (error) {
-            Logger.error(`[JM] 生成失败: ${error}`)
+            Logger.error(`[JM] 生成PDF失败: ${error}`)
             await e.reply([`${EMOJI.ERROR} 生成中断`, '🔧 请重试或检查这本本子是否存在'].join('\n'))
         }
     }
@@ -211,19 +288,14 @@ export class JMComicPlugin extends plugin {
         try {
             await e.reply(`${EMOJI.PDF} PDF生成完成\n${EMOJI.LOCK} 正在发送PDF...`)
             let res
-            if (!segment.file) {
+            if (!segment.file)
                 if (e.isGroup) {
                     if (e.group.sendFile) res = await e.group.sendFile(pdfPath)
                     else res = await e.group.fs.upload(pdfPath)
                 } else {
                     res = await e.friend.sendFile(pdfPath)
                 }
-            } else {
-                // 确保文件路径是绝对路径
-                const absolutePath = path.resolve(pdfPath)
-                const fileName = path.basename(pdfPath)
-                res = await e.reply(segment.file(absolutePath, fileName))
-            }
+            else res = await e.reply(segment.file(pdfPath))
             if (!res) throw res
             return
         } catch (error) {
