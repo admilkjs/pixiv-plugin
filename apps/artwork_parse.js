@@ -164,6 +164,9 @@ class PDFGenerator {
       const pdfDoc = await PDFDocument.create();
       pdfDoc.registerFontkit(fontkit);
       
+      // 存储当前标题以便在 addBasicInfo 中使用
+      this.currentTitle = title;
+      
       const font = await this.loadFont(pdfDoc);
       await this.setupMetadata(pdfDoc, title);
       
@@ -184,51 +187,58 @@ class PDFGenerator {
 
   async generateImageOnlyPDF(filePath, images) {
     try {
+      Logger.info(`开始生成纯图片PDF，共${images.length}张图片`);
       const pdfDoc = await PDFDocument.create();
       
       for (const img of images) {
         try {
-          const imgPage = pdfDoc.addPage();
-          const imgData = await this.processImage(img.path);
+          // 1. 读取图片数据
+          const imgBuffer = await fs.promises.readFile(img.path);
+          //Logger.info(`处理图片 ${img.index}: ${img.path}`);
           
-          // 获取图片尺寸
-          const image = await pdfDoc.embedPng(imgData);
-          const { width, height } = image.size();
+          // 2. 获取图片尺寸
+          const metadata = await sharp(imgBuffer).metadata();
+          const imgWidth = metadata.width;
+          const imgHeight = metadata.height;
+          //Logger.info(`图片尺寸: ${imgWidth}x${imgHeight}`);
           
-          // 计算图片在页面中的位置和大小
-          const pageWidth = imgPage.getWidth();
-          const pageHeight = imgPage.getHeight();
+          // 3. 创建与图片大小完全相同的页面
+          const page = pdfDoc.addPage([imgWidth, imgHeight]);
           
-          // 计算缩放比例，使图片适应页面
-          const scale = Math.min(
-            (pageWidth - 40) / width,  // 左右各留20像素边距
-            (pageHeight - 40) / height // 上下各留20像素边距
-          );
+          // 4. 嵌入图片
+          let image;
+          if (Utils.isPNGImage(imgBuffer)) {
+            image = await pdfDoc.embedPng(imgBuffer);
+          } else if (Utils.isJPEGImage(imgBuffer)) {
+            image = await pdfDoc.embedJpg(imgBuffer);
+          } else {
+            // 尝试通过 sharp 转换为 PNG
+            const pngBuffer = await sharp(imgBuffer).toFormat('png').toBuffer();
+            image = await pdfDoc.embedPng(pngBuffer);
+          }
           
-          // 计算居中位置
-          const x = (pageWidth - width * scale) / 2;
-          const y = (pageHeight - height * scale) / 2;
-          
-          // 绘制图片
-          imgPage.drawImage(image, {
-            x,
-            y,
-            width: width * scale,
-            height: height * scale,
+          // 5. 将图片绘制到整个页面，作为背景，不添加任何文本
+          page.drawImage(image, {
+            x: 0,
+            y: 0,
+            width: imgWidth,
+            height: imgHeight,
           });
+          
+          //Logger.info(`成功添加图片 ${img.index} 到PDF`);
         } catch (error) {
-          Logger.error(`处理图片 ${img.index} 时出错`, error);
-          // 出错时跳过这张图片
+          Logger.error(`处理图片 ${img.index} 时出错: ${error.message}`, error);
           continue;
         }
       }
       
+      //Logger.info(`PDF生成完成，保存到: ${filePath}`);
       const pdfBytes = await pdfDoc.save();
       await fs.promises.writeFile(filePath, pdfBytes);
       
       return filePath;
     } catch (error) {
-      Logger.error("生成图片PDF文件失败", error);
+      Logger.error(`生成图片PDF文件失败: ${error.message}`, error);
       throw error;
     }
   }
@@ -261,25 +271,64 @@ class PDFGenerator {
   }
 
   async createCoverPage(pdfDoc, title, font) {
-    const page = pdfDoc.addPage();
+    // 使用 A4 尺寸作为信息页
+    const page = pdfDoc.addPage([595, 842]); // A4 尺寸（72dpi）
     const { width, height } = page.getSize();
     
-    const safeTitle = this.convertToSafeText(`Pixiv Artwork: ${title}`);
-    page.drawText(safeTitle, {
-      x: 50,
-      y: height - 100,
-      size: 24,
-      font,
-      color: rgb(0, 0, 0),
+    // 标题部分 - 上部 20% 区域
+    const titleFontSize = 20; // 减小字体大小
+    const maxTitleWidth = width - 100; // 标题最大宽度
+    const titleText = this.convertToSafeText(`Pixiv Artwork: ${title}`);
+    
+    // 计算标题分行
+    let lines = [];
+    let currentLine = '';
+    const words = titleText.split(' ');
+    
+    for (let word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const testWidth = font.widthOfTextAtSize(testLine, titleFontSize);
+      
+      if (testWidth <= maxTitleWidth) {
+        currentLine = testLine;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    
+    // 绘制标题（可能多行）
+    let titleY = height - 80;
+    for (let i = 0; i < lines.length; i++) {
+      const lineWidth = font.widthOfTextAtSize(lines[i], titleFontSize);
+      page.drawText(lines[i], {
+        x: (width - lineWidth) / 2, // 居中
+        y: titleY - (i * (titleFontSize + 5)),
+        size: titleFontSize,
+        font,
+        color: rgb(0.1, 0.1, 0.3), // 深蓝色
+      });
+    }
+    
+    // 根据标题行数调整分隔线位置
+    const separatorY = titleY - (lines.length * (titleFontSize + 5)) - 20;
+    
+    // 分隔线
+    page.drawLine({
+      start: { x: 50, y: separatorY },
+      end: { x: width - 50, y: separatorY },
+      thickness: 1,
+      color: rgb(0.7, 0.7, 0.7), // 淡灰色
     });
 
     if (!this.hasFontSupport) {
-      page.drawText("Note: Chinese font not available, some characters may display as '_'", {
+      page.drawText("注意: 中文字体不可用，部分字符可能显示为'_'", {
         x: 50,
-        y: height - 130,
+        y: separatorY - 20,
         size: 10,
         font,
-        color: rgb(1, 0, 0),
+        color: rgb(0.8, 0.2, 0.2), // 红色警告
       });
     }
 
@@ -290,46 +339,247 @@ class PDFGenerator {
     const page = pdfDoc.getPages()[0];
     const { width, height } = page.getSize();
     const margin = 50;
-    const lineHeight = 20;
+    const lineHeight = 22; // 增加行高
     const maxLineWidth = width - margin * 2;
-    let y = height - 150;
+    
+    // 获取分隔线位置
+    const titleText = this.convertToSafeText(`Pixiv Artwork: ${this.currentTitle || ""}`);
+    const titleFontSize = 20;
+    const maxTitleWidth = width - 100;
+    let titleLines = 1;
+    let currentLine = '';
+    const words = titleText.split(' ');
+    
+    for (let word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const testWidth = font.widthOfTextAtSize(testLine, titleFontSize);
+      
+      if (testWidth <= maxTitleWidth) {
+        currentLine = testLine;
+      } else {
+        titleLines++;
+        currentLine = word;
+      }
+    }
+    
+    const titleY = height - 80;
+    const separatorY = titleY - (titleLines * (titleFontSize + 5)) - 20;
+    let y = separatorY - 50; // 从分隔线下方开始
+    
     if (!this.hasFontSupport) y -= 20;
 
+    // 添加信息框
+    page.drawRectangle({
+      x: margin - 10,
+      y: 50, // 底部留出空间
+      width: width - (margin - 10) * 2,
+      height: y - 40, // 预留顶部空间
+      borderColor: rgb(0.8, 0.8, 0.8),
+      borderWidth: 1,
+      color: rgb(0.98, 0.98, 0.98), // 非常淡的背景
+    });
+
+    // 确保info是字符串类型
+    if (typeof info !== 'string') {
+      Logger.warn(`PDF生成时info参数不是字符串类型: ${typeof info}，尝试转换`);
+      if (info === null || info === undefined) {
+        info = "无法获取作品信息";
+      } else {
+        try {
+          info = String(info);
+        } catch (e) {
+          Logger.error("转换info为字符串失败", e);
+          info = "无法获取作品信息";
+        }
+      }
+    }
+
+    // 将信息分为三部分：基本信息、标签信息和链接
     const infoLines = info.split('\n');
-    let currentPage = page;
+    let basicInfoLines = [];
+    let tagInfoLines = [];
+    let linkInfoLines = [];
+    let isTagSection = false;
+    let isLinkSection = false;
 
     for (const line of infoLines) {
+      if (line.startsWith('标签:')) {
+        isTagSection = true;
+        isLinkSection = false;
+      } else if (line.startsWith('链接:')) {
+        isTagSection = false;
+        isLinkSection = true;
+      }
+      
+      if (isTagSection) {
+        tagInfoLines.push(line);
+      } else if (isLinkSection) {
+        linkInfoLines.push(line);
+      } else {
+        basicInfoLines.push(line);
+      }
+    }
+
+    // 添加基本信息
+    const sectionTitleSize = 12; // 减小标题字体大小
+    
+    // 基本信息标题
+    page.drawText(this.convertToSafeText('基本信息'), {
+      x: margin,
+      y: y,
+      size: sectionTitleSize,
+      font,
+      color: rgb(0.2, 0.4, 0.6), // 蓝色标题
+    });
+    
+    y -= lineHeight + 2; // 减小标题和内容间距
+
+    // 绘制基本信息内容
+    for (const line of basicInfoLines) {
+      if (!line.trim()) {
+        y -= lineHeight / 2; // 空行减半行距
+        continue;
+      }
+      
       // 自动换行
       let text = this.convertToSafeText(line);
+      const fontSize = 12;
+      
       while (text.length > 0) {
-        let fitLength = this.getFitLength(text, font, 12, maxLineWidth);
+        let fitLength = this.getFitLength(text, font, fontSize, maxLineWidth);
         let drawText = text.slice(0, fitLength);
-        currentPage.drawText(drawText, {
-          x: margin,
+        page.drawText(drawText, {
+          x: margin + 10, // 缩进
           y,
-          size: 12,
+          size: fontSize,
           font,
           color: rgb(0, 0, 0),
         });
         text = text.slice(fitLength);
         y -= lineHeight;
-        if (y < margin) {
-          currentPage = pdfDoc.addPage();
-          y = currentPage.getHeight() - margin;
+      }
+    }
+
+    y -= lineHeight;
+
+    // 添加标签信息
+    if (tagInfoLines.length > 0) {
+      // 标签信息标题
+      page.drawText(this.convertToSafeText('标签信息'), {
+        x: margin,
+        y,
+        size: sectionTitleSize,
+        font,
+        color: rgb(0.2, 0.4, 0.6), // 蓝色标题
+      });
+      
+      y -= lineHeight + 2; // 减小标题和内容间距
+
+      // 绘制标签内容
+      for (const line of tagInfoLines) {
+        let text = this.convertToSafeText(line);
+        const fontSize = 12;
+        
+        while (text.length > 0) {
+          let fitLength = this.getFitLength(text, font, fontSize, maxLineWidth);
+          let drawText = text.slice(0, fitLength);
+          page.drawText(drawText, {
+            x: margin + 10, // 缩进
+            y,
+            size: fontSize,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          text = text.slice(fitLength);
+          y -= lineHeight;
+        }
+      }
+      
+      y -= lineHeight;
+    }
+
+    // 添加链接信息
+    if (linkInfoLines.length > 0) {
+      // 链接信息标题
+      page.drawText(this.convertToSafeText('链接'), {
+        x: margin,
+        y,
+        size: sectionTitleSize,
+        font,
+        color: rgb(0.2, 0.4, 0.6), // 蓝色标题
+      });
+      
+      y -= lineHeight + 2; // 减小标题和内容间距
+
+      // 绘制链接内容
+      for (const line of linkInfoLines) {
+        let text = this.convertToSafeText(line);
+        const fontSize = 12;
+        
+        while (text.length > 0) {
+          let fitLength = this.getFitLength(text, font, fontSize, maxLineWidth);
+          let drawText = text.slice(0, fitLength);
+          page.drawText(drawText, {
+            x: margin + 10, // 缩进
+            y,
+            size: fontSize,
+            font,
+            color: rgb(0, 0, 0.8), // 链接使用蓝色
+          });
+          text = text.slice(fitLength);
+          y -= lineHeight;
         }
       }
     }
+    
+    // 添加页脚
+    const footerY = 30;
+    const footerText = this.convertToSafeText(`由 Pixiv-Plugin 生成于 ${new Date().toISOString().split('T')[0]}`);
+    page.drawText(footerText, {
+      x: (width - font.widthOfTextAtSize(footerText, 10)) / 2, // 居中
+      y: footerY,
+      size: 10,
+      font,
+      color: rgb(0.5, 0.5, 0.5), // 灰色
+    });
   }
 
   async addImages(pdfDoc, images, font) {
     for (const img of images) {
       try {
-        const imgPage = pdfDoc.addPage();
-        const imgData = await this.processImage(img.path);
+        // 为每张图片创建一个与图片尺寸相同的新页面
+        const imgData = await fs.promises.readFile(img.path);
         
-        await this.drawImage(imgPage, imgData, img.index, font);
+        // 获取图片尺寸
+        const metadata = await sharp(imgData).metadata();
+        const imgWidth = metadata.width;
+        const imgHeight = metadata.height;
+        
+        // 创建与图片大小相同的页面
+        const imgPage = pdfDoc.addPage([imgWidth, imgHeight]);
+        
+        // 嵌入图片
+        let image;
+        if (Utils.isPNGImage(imgData)) {
+          image = await pdfDoc.embedPng(imgData);
+        } else if (Utils.isJPEGImage(imgData)) {
+          image = await pdfDoc.embedJpg(imgData);
+        } else {
+          // 尝试通过 sharp 转换为 PNG
+          const pngBuffer = await sharp(imgData).toFormat('png').toBuffer();
+          image = await pdfDoc.embedPng(pngBuffer);
+        }
+        
+        // 将图片绘制到整个页面
+        imgPage.drawImage(image, {
+          x: 0,
+          y: 0,
+          width: imgWidth,
+          height: imgHeight,
+        });
+        
       } catch (error) {
-        Logger.error(`处理图片 ${img.index} 时出错`, error);
+        Logger.error(`处理图片 ${img.index} 时出错: ${error.message}`, error);
         await this.addErrorPage(pdfDoc, img.index, error.message, font);
       }
     }
@@ -352,15 +602,6 @@ class PDFGenerator {
   async drawImage(page, imgData, index, font) {
     const imgWidth = page.getWidth() - 100;
     const imgHeight = page.getHeight() - 100;
-    
-    const safeTitle = this.convertToSafeText(`Image ${index}`);
-    page.drawText(safeTitle, {
-      x: 50,
-      y: page.getHeight() - 50,
-      size: 16,
-      font,
-      color: rgb(0, 0, 0),
-    });
     
     const isPNG = Utils.isPNGImage(imgData);
     const isJPEG = Utils.isJPEGImage(imgData);
@@ -415,46 +656,209 @@ class PDFGenerator {
 
   async addRelatedWorks(pdfDoc, relatedText, font) {
     if (!relatedText) return;
-    const margin = 50;
-    const lineHeight = 15;
-    const titleHeight = 30;
-    const page = pdfDoc.addPage();
+    
+    // 使用 A4 尺寸作为相关作品页
+    let page = pdfDoc.addPage([595, 842]); // 将 const 改为 let，因为页面会变化
     const { width, height } = page.getSize();
-    const maxLineWidth = width - margin * 2;
-    let yPos = height - margin;
-    let currentPage = page;
-    // 标题
-    const safeTitle = this.convertToSafeText("相关作品信息");
-    currentPage.drawText(safeTitle, {
-      x: margin,
-      y: yPos,
-      size: 16,
+    const margin = 50;
+    const lineHeight = 18; // 适当行高
+    
+    // 页面标题
+    const titleY = height - 80;
+    const titleFontSize = 20;
+    const titleText = this.convertToSafeText("相关作品信息");
+    const titleWidth = font.widthOfTextAtSize(titleText, titleFontSize);
+    
+    page.drawText(titleText, {
+      x: (width - titleWidth) / 2, // 居中
+      y: titleY,
+      size: titleFontSize,
       font,
-      color: rgb(0, 0, 0),
+      color: rgb(0.1, 0.1, 0.3), // 深蓝色
     });
-    yPos -= titleHeight;
-
-    const lines = relatedText.split('\n');
-    for (const line of lines) {
-      let text = this.convertToSafeText(line);
-      while (text.length > 0) {
-        let fitLength = this.getFitLength(text, font, 10, maxLineWidth);
-        let drawText = text.slice(0, fitLength);
-        currentPage.drawText(drawText, {
-          x: margin,
-          y: yPos,
-          size: 10,
-          font,
-          color: rgb(0, 0, 0),
+    
+    // 分隔线
+    const separatorY = titleY - 30;
+    page.drawLine({
+      start: { x: margin, y: separatorY },
+      end: { x: width - margin, y: separatorY },
+      thickness: 1,
+      color: rgb(0.7, 0.7, 0.7), // 淡灰色
+    });
+    
+    // 相关作品数量信息
+    const countMatch = relatedText.match(/找到(\d+)个相关作品/);
+    const relatedCount = countMatch ? countMatch[1] : "多";
+    const countText = this.convertToSafeText(`找到 ${relatedCount} 个相关作品`);
+    
+    page.drawText(countText, {
+      x: margin,
+      y: separatorY - 25,
+      size: 12,
+      font,
+      color: rgb(0.3, 0.3, 0.3), // 灰色
+    });
+    
+    // 添加信息框
+    page.drawRectangle({
+      x: margin - 10,
+      y: 50, // 底部留出空间
+      width: width - (margin - 10) * 2,
+      height: separatorY - 70, // 预留顶部空间
+      borderColor: rgb(0.8, 0.8, 0.8),
+      borderWidth: 1,
+      color: rgb(0.98, 0.98, 0.98), // 非常淡的背景
+    });
+    
+    // 解析相关作品信息
+    const sections = relatedText.split(/相关作品 \d+\/\d+:/g).slice(1);
+    let yPos = separatorY - 60;
+    
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i].trim();
+      const lines = section.split('\n').filter(line => line.trim());
+      
+      if (lines.length === 0) continue;
+      
+      // 在每个作品信息块之间添加分隔
+      if (i > 0) {
+        page.drawLine({
+          start: { x: margin + 10, y: yPos + 10 },
+          end: { x: width - margin - 10, y: yPos + 10 },
+          thickness: 0.5,
+          color: rgb(0.8, 0.8, 0.8), // 更淡的分隔线
         });
-        text = text.slice(fitLength);
-        yPos -= lineHeight;
-        if (yPos < margin) {
-          currentPage = pdfDoc.addPage();
-          yPos = currentPage.getHeight() - margin;
+        yPos -= 15;
+      }
+      
+      // 相关作品序号
+      const orderText = this.convertToSafeText(`相关作品 ${i+1}/${sections.length}`);
+      page.drawText(orderText, {
+        x: margin,
+        y: yPos,
+        size: 12,
+        font,
+        color: rgb(0.2, 0.4, 0.6), // 蓝色
+      });
+      yPos -= lineHeight + 5;
+      
+      // 绘制作品信息
+      for (let j = 0; j < lines.length; j++) {
+        // 检查是否需要分页
+        if (yPos < 70) {
+          // 创建新页面
+          const newPage = pdfDoc.addPage([595, 842]);
+          page = newPage; // 这里是问题所在，应该用 let 声明 page
+          yPos = height - 70;
+          
+          // 添加信息框到新页面
+          page.drawRectangle({
+            x: margin - 10,
+            y: 50, // 底部留出空间
+            width: width - (margin - 10) * 2,
+            height: height - 120, // 预留顶部空间
+            borderColor: rgb(0.8, 0.8, 0.8),
+            borderWidth: 1,
+            color: rgb(0.98, 0.98, 0.98), // 非常淡的背景
+          });
+          
+          // 添加"相关作品信息(续)"标题
+          const continueTitleText = this.convertToSafeText("相关作品信息(续)");
+          const continueTitleWidth = font.widthOfTextAtSize(continueTitleText, titleFontSize);
+          page.drawText(continueTitleText, {
+            x: (width - continueTitleWidth) / 2,
+            y: height - 40,
+            size: titleFontSize,
+            font,
+            color: rgb(0.1, 0.1, 0.3),
+          });
+        }
+        
+        const line = lines[j];
+        let text = this.convertToSafeText(line);
+        const fontSize = 12;
+        
+        // 适当缩进和颜色处理
+        let xPos = margin + 10;
+        let textColor = rgb(0, 0, 0);
+        
+        // 为标题、链接等不同内容使用不同样式
+        if (line.startsWith('标题:')) {
+          textColor = rgb(0.1, 0.1, 0.6); // 深蓝色标题
+          xPos = margin + 10;
+        } else if (line.startsWith('作者:')) {
+          textColor = rgb(0.4, 0.2, 0.6); // 紫色作者
+          xPos = margin + 10;
+        } else if (line.startsWith('标签:')) {
+          textColor = rgb(0.4, 0.4, 0.4); // 灰色标签
+          xPos = margin + 10;
+        } else if (line.startsWith('链接:')) {
+          textColor = rgb(0, 0, 0.8); // 蓝色链接
+          xPos = margin + 10;
+        } else if (line === "") {
+          yPos -= lineHeight / 2;
+          continue;
+        }
+        
+        // 自动换行
+        while (text.length > 0) {
+          const maxLineWidth = width - (xPos + margin);
+          let fitLength = this.getFitLength(text, font, fontSize, maxLineWidth);
+          let drawText = text.slice(0, fitLength);
+          
+          page.drawText(drawText, {
+            x: xPos,
+            y: yPos,
+            size: fontSize,
+            font,
+            color: textColor,
+          });
+          
+          text = text.slice(fitLength);
+          yPos -= lineHeight;
+          
+          // 如果是同一行的延续，给后续行增加额外缩进
+          if (text.length > 0) {
+            xPos = margin + 25; // 缩进增加
+          }
         }
       }
+      
+      yPos -= lineHeight / 2; // 每个作品之间留出额外空间
     }
+    
+    // 添加剩余作品信息（如果有）
+    const remainMatch = relatedText.match(/还有(\d+)个相关作品未显示/);
+    if (remainMatch) {
+      const remainCount = remainMatch[1];
+      const remainText = this.convertToSafeText(`※ 还有 ${remainCount} 个相关作品未显示`);
+      
+      // 检查是否需要新页面
+      if (yPos < 70) {
+        const newPage = pdfDoc.addPage([595, 842]);
+        page = newPage;
+        yPos = height - 70;
+      }
+      
+      page.drawText(remainText, {
+        x: margin,
+        y: yPos,
+        size: 11,
+        font,
+        color: rgb(0.5, 0.5, 0.5), // 灰色
+      });
+    }
+    
+    // 添加页脚
+    const footerY = 30;
+    const footerText = this.convertToSafeText(`由 Pixiv-Plugin 生成于 ${new Date().toISOString().split('T')[0]}`);
+    page.drawText(footerText, {
+      x: (width - font.widthOfTextAtSize(footerText, 10)) / 2, // 居中
+      y: footerY,
+      size: 10,
+      font,
+      color: rgb(0.5, 0.5, 0.5), // 灰色
+    });
   }
 
   // 工具：根据最大宽度和字体，计算可容纳的字符数
@@ -616,6 +1020,54 @@ class ImageDownloader {
 class MessageSender {
   constructor() {
     this.config = Config.getConfig("parse");
+  }
+
+  async sendMessage(e, text, options = {}) {
+    if (!text) return;
+    
+    const maxLength = options.maxLength || this.config.message.max_length || CONSTANTS.MAX_MESSAGE_LENGTH;
+    const maxLineLength = options.maxLineLength || this.config.message.max_line_length || CONSTANTS.MAX_LINE_LENGTH;
+    const delay = options.delay || this.config.message.delay || 300;
+    
+    // 处理过长的行
+    const lines = text.split('\n');
+    const processedLines = [];
+    
+    for (const line of lines) {
+      if (line.length <= maxLineLength) {
+        processedLines.push(line);
+      } else {
+        // 将过长的行分割成多行
+        let remainingText = line;
+        while (remainingText.length > 0) {
+          const chunk = remainingText.substring(0, maxLineLength);
+          processedLines.push(chunk);
+          remainingText = remainingText.substring(maxLineLength);
+        }
+      }
+    }
+    
+    // 将处理后的行重新组合成文本
+    const processedText = processedLines.join('\n');
+    
+    // 如果文本长度超过最大长度，分段发送
+    if (processedText.length <= maxLength) {
+      await e.reply(processedText);
+    } else {
+      // 分段发送
+      let start = 0;
+      while (start < processedText.length) {
+        const end = Math.min(start + maxLength, processedText.length);
+        const chunk = processedText.substring(start, end);
+        await e.reply(chunk);
+        start = end;
+        
+        // 添加延迟，避免消息发送过快
+        if (start < processedText.length) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
   }
 
   async sendPDFFile(e, filePath, fileName) {
@@ -902,6 +1354,9 @@ export default class extends plugin {
       
       const pdfPath = path.join(cacheDir, `pixiv_${pid}.pdf`);
       
+      // 添加调试输出
+      Logger.info(`使用PDF模式: ${this.config.pdf_mode}`);
+      
       if (this.config.pdf_mode === 'images_only') {
         await this.handleImagesOnlyMode(e, pid, title, infoText, relatedText, downloadedImages, pdfPath);
       } else {
@@ -968,14 +1423,14 @@ export default class extends plugin {
     return details;
   }
 
-  generateStatsInfo(stats) {
-    if (!stats) return [];
+  generateStatsInfo(artworkStats) {
+    if (!artworkStats) return [];
     
     const info = [];
-    if (stats.viewCount) info.push(`浏览数: ${stats.viewCount}`);
-    if (stats.likeCount) info.push(`点赞数: ${stats.likeCount}`);
-    if (stats.bookmarkCount) info.push(`收藏数: ${stats.bookmarkCount}`);
-    if (stats.commentCount) info.push(`评论数: ${stats.commentCount}`);
+    if (artworkStats.viewCount) info.push(`浏览数: ${artworkStats.viewCount}`);
+    if (artworkStats.likeCount) info.push(`点赞数: ${artworkStats.likeCount}`);
+    if (artworkStats.bookmarkCount) info.push(`收藏数: ${artworkStats.bookmarkCount}`);
+    if (artworkStats.commentCount) info.push(`评论数: ${artworkStats.commentCount}`);
     
     return info;
   }
@@ -987,21 +1442,16 @@ export default class extends plugin {
     for (let i = 0; i < maxRelated; i++) {
       const relatedInfo = illusts[i];
       const relatedTitle = this.formatTitle(relatedInfo.title);
-      // 兼容 tags 可能为 undefined、字符串数组、对象数组等情况
       let relatedTags = '';
       if (Array.isArray(relatedInfo.tags)) {
         if (relatedInfo.tags.length > 0 && typeof relatedInfo.tags[0] === 'object') {
-          // [{tag: 'xxx', en: 'yyy'}]
           relatedTags = relatedInfo.tags
             .map(tag => tag.tag || tag)
             .filter(Boolean)
             .join(', ');
         } else {
-          // ['xxx', 'yyy']
           relatedTags = relatedInfo.tags.filter(Boolean).join(', ');
         }
-      } else {
-        relatedTags = '';
       }
 
       text += [
@@ -1019,74 +1469,6 @@ export default class extends plugin {
     }
 
     return text;
-  }
-
-  async handleImagesOnlyMode(e, pid, title, infoText, relatedText, downloadedImages, pdfPath) {
-    await this.pdfGenerator.generateImageOnlyPDF(pdfPath, downloadedImages);
-    try {
-      const jmPdfPath = await copyFileToJM(pdfPath, pid);
-      const encryptedPath = await JM.encrypt(pid, jmPdfPath); // JM加密，返回加密PDF路径
-      await e.reply(`已生成加密PDF文件，正在发送...\n密码为作品ID: ${pid}`);
-      await this.messageSender.sendPDFFile(e, encryptedPath, `pixiv_${pid}_encrypted`);
-      // 发送后立即清理文件
-      await Promise.all([
-        fs.promises.unlink(pdfPath).catch(err => Logger.error('清理未加密PDF失败:', err)),
-        fs.promises.unlink(encryptedPath).catch(err => Logger.error('清理加密PDF失败:', err)),
-        fs.promises.unlink(jmPdfPath).catch(err => Logger.error('清理JM PDF失败:', err))
-      ]);
-    } catch (err) {
-      Logger.error('PDF加密失败', err);
-      await e.reply('PDF加密失败，发送未加密版本。');
-      await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
-      // 发送后立即清理文件
-      await fs.promises.unlink(pdfPath).catch(err => Logger.error('清理PDF失败:', err));
-    }
-  }
-
-  async handleFullMode(e, title, infoText, downloadedImages, relatedText, pdfPath, pid) {
-    await this.pdfGenerator.generatePDF(pdfPath, title, infoText, downloadedImages, relatedText);
-    try {
-      const jmPdfPath = await copyFileToJM(pdfPath, pid);
-      const encryptedPath = await JM.encrypt(pid, jmPdfPath); // JM加密，返回加密PDF路径
-      await e.reply(`已生成加密PDF文件，正在发送...\n密码为作品ID: ${pid}`);
-      await this.messageSender.sendPDFFile(e, encryptedPath, `pixiv_${pid}_encrypted`);
-      // 发送后立即清理文件
-      await Promise.all([
-        fs.promises.unlink(pdfPath).catch(err => Logger.error('清理未加密PDF失败:', err)),
-        fs.promises.unlink(encryptedPath).catch(err => Logger.error('清理加密PDF失败:', err)),
-        fs.promises.unlink(jmPdfPath).catch(err => Logger.error('清理JM PDF失败:', err))
-      ]);
-    } catch (err) {
-      Logger.error('PDF加密失败', err);
-      await e.reply('PDF加密失败，发送未加密版本。');
-      await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
-      // 发送后立即清理文件
-      await fs.promises.unlink(pdfPath).catch(err => Logger.error('清理PDF失败:', err));
-    }
-  }
-
-  async handleError(e, error, pid) {
-    let errorMessage = error.message || "未知错误";
-    const statusMatch = errorMessage.match(/(\d{3})/);
-    
-    if (statusMatch) {
-      const status = parseInt(statusMatch[1]);
-      const advice = ErrorHandler.getErrorAdvice(status, "作品信息");
-      await e.reply(`获取作品(ID: ${pid})信息时出错: ${errorMessage}\n\n${advice}`);
-    } else if (errorMessage.includes('fetch') || errorMessage.includes('网络')) {
-      await e.reply(`获取作品(ID: ${pid})信息时出现网络错误。\n\n请检查：
-1. 您的网络连接是否正常
-2. 是否需要使用代理访问Pixiv
-3. Pixiv服务器是否可访问
-4. Cookie配置是否正确`);
-    } else if (errorMessage.includes('Cannot read properties of undefined') || 
-              errorMessage.includes('Cannot read property') ||
-              errorMessage.includes('is undefined')) {
-      const friendlyError = ErrorHandler.handleJSError(error, `获取作品(ID: ${pid})信息`);
-      await e.reply(friendlyError);
-    } else {
-      await e.reply(`获取作品(ID: ${pid})信息时出错: ${errorMessage}，请稍后再试。`);
-    }
   }
 
   getArtworkType(artworks) {
@@ -1189,6 +1571,98 @@ export default class extends plugin {
         viewCount: 0,
         commentCount: 0
       };
+    }
+  }
+
+  async handleImagesOnlyMode(e, pid, title, infoText, relatedText, downloadedImages, pdfPath) {
+    try {
+      // 创建只包含图片的PDF
+      await this.pdfGenerator.generateImageOnlyPDF(pdfPath, downloadedImages);
+      
+      // 直接发送基本信息
+      if (infoText) {
+        await e.reply(infoText);
+      }
+      
+      // 如果有相关作品信息，也直接发送
+      if (relatedText) {
+        await e.reply(relatedText);
+      }
+      
+      // 检查PDF文件是否生成成功
+      if (!await Utils.fileExists(pdfPath)) {
+        await e.reply("PDF生成失败，请查看日志");
+        return false;
+      }
+      
+      try {
+        const jmPdfPath = await copyFileToJM(pdfPath, pid);
+        const encryptedPath = await JM.encrypt(pid, jmPdfPath);
+        await e.reply(`已生成加密PDF文件，正在发送...\n密码为作品ID: ${pid}`);
+        await this.messageSender.sendPDFFile(e, encryptedPath, `pixiv_${pid}_encrypted`);
+        await Promise.all([
+          fs.promises.unlink(pdfPath).catch(err => Logger.error('清理未加密PDF失败:', err)),
+          fs.promises.unlink(encryptedPath).catch(err => Logger.error('清理加密PDF失败:', err)),
+          fs.promises.unlink(jmPdfPath).catch(err => Logger.error('清理JM PDF失败:', err))
+        ]);
+      } catch (err) {
+        Logger.error('PDF加密失败', err);
+        await e.reply('PDF加密失败，发送未加密版本。');
+        await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
+        await fs.promises.unlink(pdfPath).catch(err => Logger.error('清理PDF失败:', err));
+      }
+      
+      return true;
+    } catch (error) {
+      Logger.error(`处理图片模式出错: ${error.message}`, error);
+      await e.reply(`处理作品时出错: ${error.message}`);
+      return false;
+    }
+  }
+
+  async handleFullMode(e, title, infoText, downloadedImages, relatedText, pdfPath, pid) {
+    await this.pdfGenerator.generatePDF(pdfPath, title, infoText, downloadedImages, relatedText);
+    try {
+      const jmPdfPath = await copyFileToJM(pdfPath, pid);
+      const encryptedPath = await JM.encrypt(pid, jmPdfPath);
+      await e.reply(`已生成加密PDF文件，正在发送...\n密码为作品ID: ${pid}`);
+      await this.messageSender.sendPDFFile(e, encryptedPath, `pixiv_${pid}_encrypted`);
+      await Promise.all([
+        fs.promises.unlink(pdfPath).catch(err => Logger.error('清理未加密PDF失败:', err)),
+        fs.promises.unlink(encryptedPath).catch(err => Logger.error('清理加密PDF失败:', err)),
+        fs.promises.unlink(jmPdfPath).catch(err => Logger.error('清理JM PDF失败:', err))
+      ]);
+      return true;
+    } catch (err) {
+      Logger.error('PDF加密失败', err);
+      await e.reply('PDF加密失败，发送未加密版本。');
+      await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
+      await fs.promises.unlink(pdfPath).catch(err => Logger.error('清理PDF失败:', err));
+      return true;
+    }
+  }
+
+  async handleError(e, error, pid) {
+    let errorMessage = error.message || "未知错误";
+    const statusMatch = errorMessage.match(/(\d{3})/);
+    
+    if (statusMatch) {
+      const status = parseInt(statusMatch[1]);
+      const advice = ErrorHandler.getErrorAdvice(status, "作品信息");
+      await e.reply(`获取作品(ID: ${pid})信息时出错: ${errorMessage}\n\n${advice}`);
+    } else if (errorMessage.includes('fetch') || errorMessage.includes('网络')) {
+      await e.reply(`获取作品(ID: ${pid})信息时出现网络错误。\n\n请检查：
+1. 您的网络连接是否正常
+2. 是否需要使用代理访问Pixiv
+3. Pixiv服务器是否可访问
+4. Cookie配置是否正确`);
+    } else if (errorMessage.includes('Cannot read properties of undefined') || 
+              errorMessage.includes('Cannot read property') ||
+              errorMessage.includes('is undefined')) {
+      const friendlyError = ErrorHandler.handleJSError(error, `获取作品(ID: ${pid})信息`);
+      await e.reply(friendlyError);
+    } else {
+      await e.reply(`获取作品(ID: ${pid})信息时出错: ${errorMessage}，请稍后再试。`);
     }
   }
 }
