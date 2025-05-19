@@ -19,7 +19,6 @@ export default [
         bottomHelpMessage: '是否启用用户信息解析功能',
         component: 'Switch',
     },
-    { component: 'SOFT_GROUP_END' },
 
     // 高级设置（所有新加配置都放这里）
     { label: '高级设置', component: 'SOFT_GROUP_BEGIN' },
@@ -139,7 +138,5 @@ export default [
         field: 'parse.file.font_path',
         label: '字体文件路径',
         component: 'Input',
-    },
-
-    { component: 'SOFT_GROUP_END' },
+    }
 ]
