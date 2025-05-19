@@ -95,7 +95,6 @@ export class JMComicPlugin extends plugin {
             from_id: at,
             isGroup: e.isGroup,
             isMaster: false,
-            // member: e.group.pickMember(at),
             message: message,
             message_id: e.message_id,
             message_type: e.message_type,
@@ -105,7 +104,7 @@ export class JMComicPlugin extends plugin {
             post_type: e.post_type,
             rand: e.rand,
             raw_message: msg,
-            recall: e.reacall,
+            recall: e.recall,
             reply: e.reply,
             self_id: e.self_id,
             sender: {},
@@ -113,6 +112,7 @@ export class JMComicPlugin extends plugin {
             sub_type: e.sub_type,
             time: e.time,
             user_id: at,
+            msg: msg,
         }
         new_e.sender = new_e.member?.info || {
             card: at,
@@ -130,10 +130,13 @@ export class JMComicPlugin extends plugin {
         } else {
             new_e.friend = e.friend
         }
+        Logger.info(`[JM] 随机本子触发: ${randomNum} in 群:${e.group_id || '私聊'}`);
         try {
-            bot.emit('message', { ...new_e })
-        } catch {
-            loader.deal({ ...new_e })
+            // 直接调用 pdf 方法处理
+            await this.pdf(new_e)
+        } catch (error) {
+            Logger.error(`[JM] 随机本子处理失败: ${error}`)
+            await e.reply(`${EMOJI.ERROR} 随机本子处理失败，请重试`)
         }
         return true
     }
@@ -353,7 +356,9 @@ export class JMComicPlugin extends plugin {
     }
 
     extractId(message) {
-        return message.match(/\d+/)[0]
+        if (!message) return null
+        const match = message.match(/\d+/)
+        return match ? match[0] : null
     }
     getCleanTypeText(arg) {
         const map = {
