@@ -191,12 +191,16 @@ class Comic {
             if (await this.findPdfFile(comicId, true)) {
                 return targetPath
             }
-
-            const { stdout, stderr } = await promisify(execFile)('pymupdf', [
+            const { stderr } = await promisify(execFile)('pymupdf', [
                 'clean',
+                '-compress',
                 '-encryption',
                 'aes-256',
                 '-password',
+                comicId.toString(),
+                '-user',
+                comicId.toString(),
+                '-owner',
                 comicId.toString(),
                 sourcePath,
                 targetPath,
