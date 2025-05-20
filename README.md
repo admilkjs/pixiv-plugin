@@ -59,8 +59,8 @@ _按照注释填写内容无特殊需求不需要更改_
 
 ```bash
 pip install -U pipx
-pipx install jmcomic
-pipx inject jmcomic pymupdf img2pdf
+pipx install jmcomic pymupdf
+pipx runpip jmcomic install img2pdf
 ```
 
 ### Windows环境变量配置
