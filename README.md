@@ -58,9 +58,9 @@ _按照注释填写内容无特殊需求不需要更改_
 执行
 
 ```bash
-pip install pymupdf jmcomic img2pdf -U --break-system-packages
+pipx install jmcomic
+pipx runpip jmcomic install pymupdf img2pdf
 ```
-如果报错就去掉`--break-system-packages`
 
 如果`Ubuntu`只有python3
 那么执行
