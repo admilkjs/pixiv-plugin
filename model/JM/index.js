@@ -125,7 +125,7 @@ class Comic {
             deletedCount += count
             totalSize += size
         }
-await init()
+        await init()
         return {
             deletedCount,
             sizeMB: (totalSize / 1024 / 1024).toFixed(2),
@@ -193,7 +193,9 @@ await init()
             }
 
             const pythonScript = path.join(Path.PluginPath, 'model', 'JM', 'encrypt.py')
-            const { stdout, stderr } = await promisify(execFile)('python', [
+            const { stdout, stderr } = await promisify(execFile)('pipx', [
+                'run',
+                'python',
                 pythonScript,
                 sourcePath,
                 targetPath,
