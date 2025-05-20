@@ -99,6 +99,5 @@ export default [
             max: 100,
             placeholder: '请输入同时下载的章节数',
         },
-    },
-    { component: 'SOFT_GROUP_END' },
+    }
 ]
