@@ -60,13 +60,7 @@ _按照注释填写内容无特殊需求不需要更改_
 ```bash
 pip install -U pipx
 pipx install jmcomic
-pipx runpip jmcomic install pymupdf img2pdf
-```
-
-如果`Ubuntu`只有python3
-那么执行
-```bash
-ln -s /usr/bin/python3 /usr/bin/python
+pipx inject jmcomic pymupdf img2pdf
 ```
 
 ### Windows环境变量配置
