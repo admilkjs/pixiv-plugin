@@ -192,14 +192,14 @@ class Comic {
                 return targetPath
             }
 
-            const pythonScript = path.join(Path.PluginPath, 'model', 'JM', 'encrypt.py')
-            const { stdout, stderr } = await promisify(execFile)('pipx', [
-                'run',
-                'python',
-                pythonScript,
+            const { stdout, stderr } = await promisify(execFile)('pymupdf', [
+                'clean',
+                '-encryption',
+                'aes-256',
+                '-password',
+                comicId.toString(),
                 sourcePath,
                 targetPath,
-                comicId.toString(),
             ])
 
             return stderr ? sourcePath : targetPath
