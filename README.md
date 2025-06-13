@@ -59,6 +59,7 @@ _按照注释填写内容无特殊需求不需要更改_
 
 ```bash
 pip install -U pipx
+pipx ensurepath
 pipx install jmcomic pymupdf
 pipx runpip jmcomic install img2pdf
 ```
