@@ -1096,7 +1096,7 @@ class MessageSender {
       // 方法2: 直接发送文件
       if (segment?.file) {
         try {
-          await e.reply(segment.file(filePath, fullFileName));
+          await e.reply(segment.file(filePath));
           return true;
         } catch (err) {
           Logger.error(`直接发送文件失败: ${err.message}`);
