@@ -42,7 +42,7 @@ pnpm install --filter=pixiv-plugin
     - 其余功能发送`#jm帮助`查看
 
 ### 配置
-
+#### 推荐使用锅巴进行配置
 #### pixiv
 
 打开`config/config/config.yaml`
@@ -53,6 +53,7 @@ socket5 或者 http 代理
 #### JM
 
 打开`config/config/jm.yaml`
+
 _按照注释填写内容无特殊需求不需要更改_
 然后`安装Python`
 执行
