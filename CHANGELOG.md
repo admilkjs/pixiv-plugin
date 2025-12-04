@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.8.0](https://github.com/admilkjs/pixiv-plugin/compare/v1.7.0...v1.8.0) (2025-12-04)
+
+
+### Features
+
+* **config:** 配置文件修改 ([def85b9](https://github.com/admilkjs/pixiv-plugin/commit/def85b951d8ad3f662265784dc454258b3407160))
+* **express:** 适配Miao ([cedd205](https://github.com/admilkjs/pixiv-plugin/commit/cedd2055773e441a038d85cbcc8596e9bfd4c3a9))
+* **JM:** 优化缓存清理功能并支持选择性清理 ([8b77ccf](https://github.com/admilkjs/pixiv-plugin/commit/8b77ccf4fecba9ab1c117258031363ebaf492e29))
+* **JM:** 随机本子 ([48c19aa](https://github.com/admilkjs/pixiv-plugin/commit/48c19aa0adfce8a58a464ee7f295647108a8a945))
+* 增加PDF生成中文支持和图片处理功能 ([01c23f6](https://github.com/admilkjs/pixiv-plugin/commit/01c23f6afaa217a9efcf1792a4f3f8d4c9b0c19b))
+* 增加PDF生成中文支持和图片处理功能 ([e260935](https://github.com/admilkjs/pixiv-plugin/commit/e26093561398cf2fa13a5b7bc2ff0bfc07b8a8b0))
+* 更新Pixiv插件，增强PDF生成和图片下载功能 ([d64c492](https://github.com/admilkjs/pixiv-plugin/commit/d64c492873f533299ef795124cf37f0796ba1586))
+
+
+### Bug Fixes
+
+* **apps:** 修复 PDF 发送失败问题 ([bf61a31](https://github.com/admilkjs/pixiv-plugin/commit/bf61a315a66aa4cb9098ae8ef46bae743981bc5a))
+* **apps:** 修复直接发送 PDF 失败的问题 ([f803551](https://github.com/admilkjs/pixiv-plugin/commit/f803551eb387f15817ca330762a745640f61bb9b))
+* **apps:** 兼容不同版本的 segment.file ([bb4e482](https://github.com/admilkjs/pixiv-plugin/commit/bb4e482cf82641ba080ce6a3f784b7d93df5584b))
+* **artwork_parse:** 确保info参数为字符串类型并调整handleFullMode参数顺序 ([f3e8e06](https://github.com/admilkjs/pixiv-plugin/commit/f3e8e0642955a09fd34e2c1f098a6c0f3f12d81a))
+* **jm:** send ([0191fee](https://github.com/admilkjs/pixiv-plugin/commit/0191fee3ece7704d573c9264d3ac40eb960a0c41))
+* **JM:** 改个help ([a556d8d](https://github.com/admilkjs/pixiv-plugin/commit/a556d8d01fdaf77a98278c47760a9555023d4b5b))
+* **JM:** 自动创建配置文件 ([82a1f79](https://github.com/admilkjs/pixiv-plugin/commit/82a1f793274e79c57204302d9a6d9e78fa7fab6b))
+* 锅巴 ([4b5132e](https://github.com/admilkjs/pixiv-plugin/commit/4b5132e2f46a4db5641a63f79efacccef9ca5e7b))
+
 ## [1.7.0](https://github.com/admilkjs/pixiv-plugin/compare/v1.6.0...v1.7.0) (2025-03-30)
 
 
