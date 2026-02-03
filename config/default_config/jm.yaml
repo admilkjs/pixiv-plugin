@@ -1,5 +1,10 @@
 # PDF最大大小 单位 MB
 maxSize: 100
+
+# 随机本子ID范围
+random:
+  min: 1
+  max: 474493
 # # http/s代理地址
 # proxy: ""
 # 发送失败是否转为http链接发送

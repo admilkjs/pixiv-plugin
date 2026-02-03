@@ -78,7 +78,7 @@ class Comic {
 
     async findPdfFile(comicId, encrypted = false) {
         const targetDir = encrypted ? DIRS.PDF.ENCRYPTED : DIRS.PDF.UNENCRYPTED
-        const filename = encrypted ? `${comicId}_encrypted.pdf` : `${comicId}.pdf`
+        const filename = `${comicId}.pdf`
         const pdfPath = path.join(targetDir, filename)
 
         try {
@@ -162,7 +162,7 @@ class Comic {
 
         try {
             if (comicId) {
-                const pdfPatterns = [`${comicId}.pdf`, `${comicId}_encrypted.pdf`]
+                const pdfPatterns = [`${comicId}.pdf`]
 
                 for (const pattern of pdfPatterns) {
                     const pdfPath = path.join(pdfDir, pattern)
@@ -185,7 +185,7 @@ class Comic {
     async encryptPDF(comicId) {
         await init()
         const sourcePath = path.join(DIRS.PDF.UNENCRYPTED, `${comicId}.pdf`)
-        const targetPath = path.join(DIRS.PDF.ENCRYPTED, `${comicId}_encrypted.pdf`)
+        const targetPath = path.join(DIRS.PDF.ENCRYPTED, `${comicId}.pdf`)
 
         try {
             if (await this.findPdfFile(comicId, true)) {

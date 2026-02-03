@@ -2,15 +2,17 @@ import { Request, Logger } from "#utils";
 
 /**
  * 获取插画链接
- * @param {string} pid - ID
- * @returns {Promise<Object>} 包含链接的对象
+ * @param {string} pid - 作品ID
+ * @returns {Promise<Array>} 包含链接的数组
  * @throws {Error} 如果获取数据失败，抛出错误
  */
 export async function artworksUrl(pid) {
-  let url = `https://www.pixiv.net/ajax/illust/${pid}/pages`;
+  const url = `https://www.pixiv.net/ajax/illust/${pid}/pages`;
   try {
     const response = await Request.request({ url });
-    if (response.error) throw new Error(response);
+    if (response.error) {
+      throw new Error(response.message || '获取作品链接失败');
+    }
     if (!Array.isArray(response.body)) {
       response.body = [response.body];
     }
@@ -31,21 +33,31 @@ export async function artworksUrl(pid) {
       };
     });
   } catch (error) {
-    Logger.error("Error fetching data:", error);
+    Logger.error("获取作品链接失败:", error);
+    throw error;
   }
 }
+
+/**
+ * 获取插画信息
+ * @param {string} pid - 作品ID
+ * @returns {Promise<Object>} 作品信息对象
+ * @throws {Error} 如果获取数据失败，抛出错误
+ */
 export async function artworksInfo(pid) {
-  let url = `https://www.pixiv.net/ajax/illust/${pid}`;
+  const url = `https://www.pixiv.net/ajax/illust/${pid}`;
   try {
     const response = await Request.request({ url });
-    if (response.error) throw new Error(response);
+    if (response.error) {
+      throw new Error(response.message || '获取作品信息失败');
+    }
     if (!Array.isArray(response.body.tags.tags)) {
       response.body.tags.tags = [response.body.tags.tags];
     }
-    let title = response.body.title;
-    let createDate = response.body.createDate;
-    let authorid = response.body.tags.authorId;
-    let tags = response.body.tags.tags.map((item) => {
+    const title = response.body.title;
+    const createDate = response.body.createDate;
+    const authorid = response.body.tags.authorId;
+    const tags = response.body.tags.tags.map((item) => {
       return { tag: item.tag, en: item.translation?.en || null };
     });
     return {
@@ -55,16 +67,26 @@ export async function artworksInfo(pid) {
       tags,
     };
   } catch (error) {
-    Logger.error("Error fetching data:", error);
+    Logger.error("获取作品信息失败:", error);
+    throw error;
   }
 }
+
+/**
+ * 获取相关插画
+ * @param {string} pid - 作品ID
+ * @returns {Promise<Object|null>} 相关作品信息或null
+ */
 export async function relatedIllust(pid) {
-  let url = `https://www.pixiv.net/ajax/illust/${pid}/recommend/init?limit=20&lang=zh`;
+  const url = `https://www.pixiv.net/ajax/illust/${pid}/recommend/init?limit=20&lang=zh`;
   try {
     const response = await Request.request({ url });
-    if (response.error) throw new Error(response);
-    return response.body.illusts.length != 0 ? response.body : null;
+    if (response.error) {
+      throw new Error(response.message || '获取相关作品失败');
+    }
+    return response.body.illusts?.length > 0 ? response.body : null;
   } catch (error) {
-    Logger.error("获取相关插画失败", error);
+    Logger.error("获取相关插画失败:", error);
+    throw error;
   }
 }

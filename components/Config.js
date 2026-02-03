@@ -152,6 +152,37 @@ class Config {
     }
 
     /**
+     * 刷新指定配置的缓存
+     * @param {string} name - 配置名称
+     * @param {'config'|'default_config'} type - 配置类型
+     */
+    refreshCache(name, type = 'config') {
+        const key = `${type}.${name}`
+        delete this.config[key]
+        delete this.oldConfig[key]
+    }
+
+    /**
+     * 刷新所有配置缓存
+     */
+    refreshAllCache() {
+        this.config = {}
+        this.oldConfig = {}
+    }
+
+    /**
+     * 销毁所有文件监听器
+     */
+    destroy() {
+        for (const key in this.watcher) {
+            if (this.watcher[key]?.close) {
+                this.watcher[key].close()
+            }
+        }
+        this.watcher = { config: {}, defSet: {} }
+    }
+
+    /**
      * @description: 修改设置
      * @param {String} name 文件名
      * @param {String} key 修改的key值
@@ -159,14 +190,17 @@ class Config {
      * @param {'config'|'default_config'} type 配置文件或默认
      */
     modify(name, key, value, type = 'config') {
-        let path = `${PluginPath}/config/${type}/${name}.yaml`
-        if (key.includes('.')) key = key.split('.')
-        else key = [key]
-        let Yaml_ = new YamlReader(path)
-        Yaml_.document.setIn(key, value)
+        const filePath = `${PluginPath}/config/${type}/${name}.yaml`
+        const cacheKey = `${type}.${name}`
+        const keyPath = key.includes('.') ? key.split('.') : [key]
+        
+        let Yaml_ = new YamlReader(filePath)
+        Yaml_.document.setIn(keyPath, value)
         Yaml_.save()
-        this.oldConfig[key] = _.cloneDeep(this.config[key])
-        delete this.config[`${type}.${name}`]
+        
+        // 更新缓存
+        this.oldConfig[cacheKey] = _.cloneDeep(this.config[cacheKey])
+        delete this.config[cacheKey]
     }
 
     /**

@@ -82,8 +82,11 @@ export class JMComicPlugin extends plugin {
     }
     async random(e) {
         const at = e.user_id
-        //随机范围1-474493
-        let randomNum = Math.floor(Math.random() * (474493 - 1 + 1)) + 1
+        // 从配置获取随机数范围
+        const config = Config.getConfig('jm')
+        const min = config.random?.min || 1
+        const max = config.random?.max || 474493
+        const randomNum = Math.floor(Math.random() * (max - min + 1)) + min
         const message = [{ type: 'text', text: `#jm ${randomNum}` }]
         const msg = `#jm ${randomNum}`
         const loader = (await import('../../../lib/plugins/loader.js')).default

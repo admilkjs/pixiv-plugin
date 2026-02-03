@@ -1,7 +1,20 @@
+/**
+ * 日志工具类
+ * 封装全局 logger 或使用 console 作为后备
+ */
 class Logger {
   constructor() {
-    for (let i of ["info", "warn", "error", "mark", "debug"])
-      this[i] = (...args) => global.logger? logger[i]("[pixiv-plugin]", ...args):console.log("[pixiv-plugin]", ...args);
+    const methods = ["info", "warn", "error", "mark", "debug"];
+    for (const method of methods) {
+      this[method] = (...args) => {
+        if (global.logger && typeof global.logger[method] === 'function') {
+          global.logger[method]("[pixiv-plugin]", ...args);
+        } else {
+          console.log(`[pixiv-plugin][${method.toUpperCase()}]`, ...args);
+        }
+      };
+    }
   }
 }
+
 export default new Logger();
