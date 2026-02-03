@@ -3,31 +3,13 @@ const { ArtWorks, ArtWorksInfo, Related } = Pixiv;
 import { Config } from "#components";
 import { Logger } from "#utils";
 import fetch from "node-fetch";
-import fs from "fs";
 import path from "path";
-import { JM } from '#model';
 import { CONSTANTS } from "../model/constants.js";
 import FileUtils from "../model/utils/FileUtils.js";
 import ErrorHandler from "../model/utils/ErrorHandler.js";
 import ImageDownloader from "../model/utils/ImageDownloader.js";
 import MessageSender from "../model/utils/MessageSender.js";
 import PDFGenerator from "../model/pdf/PDFGenerator.js";
-
-/**
- * 拷贝PDF到JM的unencrypted目录
- * @param {string} pdfPath - PDF文件路径
- * @param {string} pid - 作品ID
- * @returns {Promise<string>} JM目录中的PDF路径
- */
-async function copyFileToJM(pdfPath, pid) {
-  const jmUnencryptedDir = path.resolve(process.cwd(), 'plugins/pixiv-plugin/resources/JM/pdf/unencrypted');
-  const jmEncryptedDir = path.resolve(process.cwd(), 'plugins/pixiv-plugin/resources/JM/pdf/encrypted');
-  if (!fs.existsSync(jmUnencryptedDir)) fs.mkdirSync(jmUnencryptedDir, { recursive: true });
-  if (!fs.existsSync(jmEncryptedDir)) fs.mkdirSync(jmEncryptedDir, { recursive: true });
-  const jmPdfPath = path.join(jmUnencryptedDir, `${pid}.pdf`);
-  await fs.promises.copyFile(pdfPath, jmPdfPath);
-  return jmPdfPath;
-}
 
 /**
  * Pixiv作品解析插件
@@ -168,6 +150,7 @@ export default class extends plugin {
 
   /**
    * 统一的 PDF 生成和发送处理
+   * 直接生成加密 PDF，无需额外的加密步骤
    * @param {Object} e - 事件对象
    * @param {Object} options - 选项
    */
@@ -175,14 +158,14 @@ export default class extends plugin {
     const { pid, title, infoText, relatedText, downloadedImages, pdfPath, isImagesOnlyMode } = options;
 
     try {
-      // 根据模式生成 PDF
+      // 直接生成加密 PDF (使用作品 ID 作为密码)
       if (isImagesOnlyMode) {
-        await this.pdfGenerator.generateImageOnlyPDF(pdfPath, downloadedImages);
+        await this.pdfGenerator.generateEncryptedImagePDF(pdfPath, downloadedImages, pid);
         // 纯图片模式下，单独发送文本信息
         if (infoText) await e.reply(infoText);
         if (relatedText) await e.reply(relatedText);
       } else {
-        await this.pdfGenerator.generatePDF(pdfPath, title, infoText, downloadedImages, relatedText);
+        await this.pdfGenerator.generatePDF(pdfPath, title, infoText, downloadedImages, relatedText, pid);
       }
 
       // 检查 PDF 是否生成成功
@@ -191,44 +174,17 @@ export default class extends plugin {
         return false;
       }
 
-      // 统一的加密和发送逻辑
-      await this.encryptAndSendPDF(e, pdfPath, pid);
+      // 发送加密 PDF
+      await e.reply(`已生成加密PDF文件，正在发送...\n密码为作品ID: ${pid}`);
+      await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
+      
+      // 清理临时文件
+      await FileUtils.safeUnlink(pdfPath, 'PDF');
       return true;
     } catch (error) {
       Logger.error(`PDF处理出错: ${error.message}`, error);
       await e.reply(`处理作品时出错: ${error.message}`);
       return false;
-    }
-  }
-
-  /**
-   * 加密并发送 PDF（统一逻辑）
-   * @param {Object} e - 事件对象
-   * @param {string} pdfPath - 原始 PDF 路径
-   * @param {string} pid - 作品 ID
-   */
-  async encryptAndSendPDF(e, pdfPath, pid) {
-    let jmPdfPath = null;
-    let encryptedPath = null;
-
-    try {
-      jmPdfPath = await copyFileToJM(pdfPath, pid);
-      encryptedPath = await JM.encrypt(pid, jmPdfPath);
-      
-      await e.reply(`已生成加密PDF文件，正在发送...\n密码为作品ID: ${pid}`);
-      await this.messageSender.sendPDFFile(e, encryptedPath, `pixiv_${pid}`);
-      
-      // 清理所有临时文件
-      await FileUtils.safeUnlinkMany([
-        { path: pdfPath, description: '未加密PDF' },
-        { path: encryptedPath, description: '加密PDF' },
-        { path: jmPdfPath, description: 'JM PDF' }
-      ]);
-    } catch (err) {
-      Logger.error('PDF加密失败', err);
-      await e.reply('PDF加密失败，发送未加密版本。');
-      await this.messageSender.sendPDFFile(e, pdfPath, `pixiv_${pid}`);
-      await FileUtils.safeUnlink(pdfPath, 'PDF');
     }
   }
 
