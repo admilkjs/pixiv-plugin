@@ -1,3 +1,5 @@
+import common from '../../../../lib/common/common.js';
+
 /**
  * 文本分段函数
  * @param {string} text - 待分段文本
@@ -39,41 +41,6 @@ export function splitText(text, maxLength = 1000) {
 }
 
 /**
- * 创建转发消息
- * @param {Object} e - 事件对象
- * @param {Array} messages - 消息列表
- * @param {string} title - 标题
- * @returns {Promise<any>}
- */
-async function makeForwardMsg(e, messages, title) {
-  const forwardMsg = messages.map(msg => ({
-    message: msg,
-    nickname: Bot?.nickname || "Pixiv-Plugin",
-    user_id: Bot?.uin || e.self_id
-  }));
-  
-  // 尝试多种转发消息方式
-  if (global.common?.makeForwardMsg) {
-    return await global.common.makeForwardMsg(e, forwardMsg, title);
-  }
-  if (typeof Bot?.makeForwardMsg === 'function') {
-    return await Bot.makeForwardMsg(forwardMsg);
-  }
-  if (e.group?.makeForwardMsg) {
-    return await e.group.makeForwardMsg(forwardMsg);
-  }
-  if (e.friend?.makeForwardMsg) {
-    return await e.friend.makeForwardMsg(forwardMsg);
-  }
-  if (typeof segment !== 'undefined' && segment?.forward) {
-    return segment.forward(forwardMsg);
-  }
-  
-  // 回退：直接返回拼接的文本
-  return `${title}\n${messages.join('\n')}`;
-}
-
-/**
  * 消息分段发送函数
  * @param {Object} e - 事件对象
  * @param {Array} messages - 消息列表
@@ -89,7 +56,7 @@ export async function sendSegmentedMessages(e, messages, title, maxSegments = 5)
     const end = Math.min(start + maxSegments, totalMessages);
     const currentMessages = messages.slice(start, end);
     
-    const msgx = await makeForwardMsg(e, currentMessages, `${title} (${i + 1}/${numForwards})`);
+    const msgx = await common.makeForwardMsg(e, currentMessages, `${title} (${i + 1}/${numForwards})`);
     await e.reply(msgx);
     
     // 如果不是最后一条消息，等待一下再发送下一条
