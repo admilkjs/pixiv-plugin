@@ -1080,6 +1080,10 @@ class MessageSender {
     const fullFileName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
     
     try {
+      // Miao: sendFile
+      if (e.group?.sendFile){
+        e.group.sendFile(filePath)
+      }
       // 方法1: 群文件上传
       if (e.group?.fs?.upload) {
         try {
