@@ -1,11 +1,12 @@
-import { spawn, execFile } from 'child_process'
+import { spawn } from 'child_process'
 import fs from 'fs/promises'
 import path from 'path'
 import Path from '../../components/Path.js'
 import YamlReader from '../../components/YamlReader.js'
 import Config from '../../components/Config.js'
 import Logger from '../utils/Logger.js'
-import { promisify } from 'util'
+import muhammara from 'muhammara'
+import jmcomic from '@jmcomic/jmcomic'
 import Yaml from 'yaml'
 const cfg = Config.getConfig('jm')
 const BASE_DIR = path.join(Path.PluginPath, 'resources', 'JM')
@@ -47,6 +48,22 @@ async function init() {
     }
 }
 await init()
+let externalJmcomicAvailable = null
+async function hasExternalJmcomic() {
+    if (externalJmcomicAvailable !== null) {
+        return externalJmcomicAvailable
+    }
+
+    externalJmcomicAvailable = await new Promise((resolve) => {
+        const child = spawn('jmcomic', ['--help'])
+
+        child.on('error', () => resolve(false))
+        child.on('close', (code) => resolve(code === 0))
+    })
+
+    return externalJmcomicAvailable
+}
+
 class Comic {
     async downloadComic(comicId) {
         const comicDir = path.join(DIRS.IMG, comicId.toString())
@@ -60,9 +77,14 @@ class Comic {
         Cfg_yaml.set('plugins', plugins)
         Cfg_yaml.set('download', download)
         Cfg_yaml.save()
-        return new Promise((resolve, reject) => {
-            const child = spawn('jmcomic', [comicId.toString(), `--option=${Configs.COMIC_BASE_DIR}/option.yml`])
 
+        const useSystemJmcomic = await hasExternalJmcomic()
+        const args = [comicId.toString(), `--option=${Configs.COMIC_BASE_DIR}/option.yml`]
+        const child = useSystemJmcomic
+            ? spawn('jmcomic', args)
+            : jmcomic.spawn(args)
+
+        return new Promise((resolve, reject) => {
             child.on('close', async (code) => {
                 if (code === 0) {
                     const pdfPath = path.join(DIRS.PDF.UNENCRYPTED, `${comicId}.pdf`)
@@ -78,7 +100,7 @@ class Comic {
 
     async findPdfFile(comicId, encrypted = false) {
         const targetDir = encrypted ? DIRS.PDF.ENCRYPTED : DIRS.PDF.UNENCRYPTED
-        const filename = encrypted ? `${comicId}_encrypted.pdf` : `${comicId}.pdf`
+        const filename = `${comicId}.pdf`
         const pdfPath = path.join(targetDir, filename)
 
         try {
@@ -162,7 +184,10 @@ class Comic {
 
         try {
             if (comicId) {
-                const pdfPatterns = [`${comicId}.pdf`, `${comicId}_encrypted.pdf`]
+                const pdfPatterns = [`${comicId}.pdf`]
+                if (pdfDir === DIRS.PDF.ENCRYPTED) {
+                    pdfPatterns.push(`${comicId}_encrypted.pdf`)
+                }
 
                 for (const pattern of pdfPatterns) {
                     const pdfPath = path.join(pdfDir, pattern)
@@ -185,28 +210,23 @@ class Comic {
     async encryptPDF(comicId) {
         await init()
         const sourcePath = path.join(DIRS.PDF.UNENCRYPTED, `${comicId}.pdf`)
-        const targetPath = path.join(DIRS.PDF.ENCRYPTED, `${comicId}_encrypted.pdf`)
+        const targetPath = path.join(DIRS.PDF.ENCRYPTED, `${comicId}.pdf`)
 
         try {
             if (await this.findPdfFile(comicId, true)) {
                 return targetPath
             }
-            const { stderr } = await promisify(execFile)('pymupdf', [
-                'clean',
-                '-compress',
-                '-encryption',
-                'aes-256',
-                '-password',
-                comicId.toString(),
-                '-user',
-                comicId.toString(),
-                '-owner',
-                comicId.toString(),
-                sourcePath,
-                targetPath,
-            ])
 
-            return stderr ? sourcePath : targetPath
+            const pdfDoc = new muhammara.Recipe(sourcePath, targetPath)
+            pdfDoc
+                .encrypt({
+                    userPassword: comicId.toString(),
+                    ownerPassword: comicId.toString(),
+                    userProtectionFlag: 4,
+                })
+                .endPDF()
+
+            return targetPath
         } catch (err) {
             Logger.error('PDF加密失败:', err)
             return sourcePath

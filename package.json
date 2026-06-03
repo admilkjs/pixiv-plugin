@@ -7,6 +7,7 @@
         "fix": "npx prettier --write **/*.js && npx prettier --write *.js"
     },
     "dependencies": {
+        "@jmcomic/jmcomic": "img2pdf",
         "@pdf-lib/fontkit": "^1.1.1",
         "axios": "^1.7.9",
         "cheerio": "1.0.0-rc.12",
@@ -16,6 +17,7 @@
         "https-proxy-agent": "7.0.5",
         "img2pdf": "^1.0.11",
         "jsdom": "^26.0.0",
+        "muhammara": "^6.0.5",
         "pdf-lib": "^1.17.1",
         "puppeteer": "^24.1.0",
         "qs": "^6.14.0",
