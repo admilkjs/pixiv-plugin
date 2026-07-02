@@ -55,7 +55,23 @@ socket5 或者 http 代理
 打开`config/config/jm.yaml`
 
 _按照注释填写内容无特殊需求不需要更改_
-然后`安装Python`
+
+> [!WARNING]
+> 由于 pnpm v10+ 修改了规则，需要运行以下命令完成模块安装以保证PDF加密功能正常
+
+```sh
+pnpm approve-builds muhammara
+```
+
+> 如果在 `pnpm i` 时运行过 `pnpm approve-builds` 并勾选上 `muhammara` 则可以忽略，具体查看是否有日志提示为准
+
+新版插件运行 `pnpm install` 会自动下载对应的 `jmcomic` 版本，如果没有自动安装对应版本或无法使用请根据下方指引手工安装 Python 使用
+
+<details><summary>旧版Python方案</summary>
+
+> 新版本此方案已被替代，仅当无法使用时的备用方案作用
+
+自行 `安装Python`
 执行
 
 ```bash
@@ -67,7 +83,7 @@ pipx runpip jmcomic install img2pdf
 
 ### Windows环境变量配置
 
-如果你使用Windows系统，需要额外配置以下环境变量:
+如果你使用Windows系统，可能需要额外配置以下环境变量:
 
 1. 打开系统环境变量设置
    - 右键"此电脑" -> 属性 -> 高级系统设置 -> 环境变量
@@ -87,6 +103,7 @@ pipx runpip jmcomic install img2pdf
 
 4. 重启终端和云崽后即可正常使用
 
+</details>
 
 
 ## PDF生成模式
