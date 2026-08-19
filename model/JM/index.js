@@ -112,7 +112,7 @@ async function encryptWithMuhammara(sourcePath, targetPath, comicId) {
 
         return targetPath
     } catch (err) {
-        Logger.warn('muhammara 加密失败，回退到旧的 PDF 加密方法:', err)
+        Logger.warn('muhammara 加密失败，回退到 Python版本 PDF 加密方法:', err)
         return null
     }
 }
@@ -144,7 +144,7 @@ async function encryptWithLegacyMethod(sourcePath, targetPath, comicId) {
 
         return stderr ? null : targetPath
     } catch (err) {
-        Logger.warn('旧版 PDF 加密方法失败:', err)
+        Logger.warn(`旧版 PDF 加密方法失败，可尝试运行 ${logger.green('pnpm approve-builds muhammara')} 使用新版方案，错误信息:`, err)
         return null
     }
 }
