@@ -26,6 +26,9 @@ git clone --depth=1 https://ghfast.top/https://github.com/admilkjs/pixiv-plugin.
 pnpm install --filter=pixiv-plugin
 ```
 
+> [!NOTE]
+> 如果需要使用 JM 的加密功能，请查看下方[JM部分](#jm-1)
+
 ## 功能
 
 ### pixiv
